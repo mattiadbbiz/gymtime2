@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GymTime</title>
+<meta name="apple-mobile-web-app-title" content="GymTime">
+<meta name="theme-color" content="#E9EEF4">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/stile.css">
+</head>
+<body>
+
+<main id="vista-accesso" class="vista centrata" hidden>
+  <div class="pannello">
+    <img class="logo" src="/icon.svg" alt="" width="96" height="96">
+    <h1 id="titolo-accesso">GymTime</h1>
+    <p id="sotto-accesso" class="sotto">Entra con le credenziali che ti ha dato il tuo coach.</p>
+    <form id="form-accesso" novalidate>
+      <label>Username<input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <p class="errore" role="alert"></p>
+      <button class="primario">Entra</button>
+    </form>
+  </div>
+  <button id="tasto-admin" class="tasto-admin" type="button">Admin</button>
+</main>
+
+<main id="vista-password" class="vista centrata" hidden>
+  <div class="pannello">
+    <span class="nastro">Primo accesso</span>
+    <h1>Scegli la tua password</h1>
+    <p class="sotto">Quella che ti hanno dato serve solo per entrare la prima volta.</p>
+    <form id="form-password" novalidate>
+      <label>Password attuale<input name="attuale" type="password" autocomplete="current-password" required></label>
+      <label>Nuova password<input name="nuova" type="password" autocomplete="new-password" required></label>
+      <label>Ripeti la nuova password<input name="conferma" type="password" autocomplete="new-password" required></label>
+      <p class="aiuto">Almeno 8 caratteri.</p>
+      <p class="errore" role="alert"></p>
+      <button class="primario">Salva password</button>
+    </form>
+    <button class="link" type="button" data-esci>Esci</button>
+  </div>
+</main>
+
+<div id="vista-home" class="vista" hidden>
+  <header class="barra">
+    <img src="/icon.svg" alt="" width="36" height="36">
+    <div class="chi"><strong id="saluto"></strong><span id="ruolo"></span></div>
+    <button class="link" type="button" data-esci>Esci</button>
+  </header>
+  <main class="home">
+    <section class="azioni">
+      <button class="azione" type="button" disabled>Allena<small>In arrivo</small></button>
+      <button class="azione" type="button" disabled>Storico<small>In arrivo</small></button>
+    </section>
+
+    <section id="sez-coach" class="azioni coach" hidden>
+      <button class="azione" type="button" id="apri-libreria">Libreria<small>Esercizi e accorgimenti</small></button>
+      <button class="azione" type="button" disabled>Schede<small>In arrivo</small></button>
+    </section>
+
+    <section id="sez-persone" hidden>
+      <h2 id="titolo-persone">I tuoi atleti</h2>
+      <ul id="elenco" class="elenco"></ul>
+      <p id="elenco-vuoto" class="sotto" hidden>Nessun profilo ancora: crea il primo qui sotto.</p>
+
+      <form id="form-nuovo" class="riquadro" novalidate>
+        <h3>Nuovo profilo</h3>
+        <label id="campo-ruolo" hidden>Ruolo
+          <select name="ruolo"><option value="atleta">Atleta</option><option value="coach">Coach</option></select>
+        </label>
+        <label id="campo-coach" hidden>Coach dell’atleta<select name="coach_id"></select></label>
+        <label>Nome o soprannome<input name="nome" maxlength="60" required></label>
+        <label>Username<input name="username" autocapitalize="none" spellcheck="false" required></label>
+        <label>Password iniziale
+          <span class="riga"><input name="password" autocapitalize="none" spellcheck="false" required><button type="button" class="secondario" data-genera>Genera</button></span>
+        </label>
+        <p class="errore" role="alert"></p>
+        <button class="primario">Crea profilo</button>
+      </form>
+      <div id="credenziali" class="biglietto" hidden></div>
+    </section>
+  </main>
+</div>
+
+<div id="vista-libreria" class="vista" hidden>
+  <header class="barra">
+    <button class="link indietro" type="button" data-home>‹ Home</button>
+    <div class="chi"><strong>Libreria esercizi</strong><span id="lib-conta"></span></div>
+    <button class="secondario" type="button" id="lib-nuovo">Nuovo</button>
+  </header>
+  <main class="home">
+    <input id="lib-cerca" type="search" placeholder="Cerca per nome, muscolo o attrezzo" autocomplete="off">
+    <div id="lib-filtri" class="filtri" role="group" aria-label="Categoria"></div>
+    <div id="lib-form-nuovo"></div>
+    <div id="lib-elenco" class="lib-elenco"></div>
+    <p id="lib-vuoto" class="sotto" hidden>Nessun esercizio trovato.</p>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+<script src="/libreria.js"></script>
+</body>
+</html>
