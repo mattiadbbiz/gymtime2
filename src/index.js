@@ -7,6 +7,7 @@ import * as S from './schede.js';
 import * as A from './allenamento.js';
 import * as D from './domande.js';
 import * as I from './importa.js';
+import * as M from './mobilita.js';
 
 async function limite(env, chiave) {
   if (!env.LIMITE_ACCESSI) return;
@@ -76,6 +77,14 @@ async function api(request, env, url) {
   if ((r = p.match(/^\/api\/archivio\/(\d+)$/)) && m === 'GET') return S.leggiArchiviata(env, io, +r[1]);
   if ((r = p.match(/^\/api\/archivio\/(\d+)\/ripristina$/)) && m === 'POST') return S.ripristinaScheda(env, io, +r[1]);
 
+  // Storico delle schede: schede vecchie importate e schede archiviate
+  if ((r = p.match(/^\/api\/storico-schede\/(\d+)$/)) && m === 'POST') return S.salvaImportata(request, env, io, +r[1]);
+  if ((r = p.match(/^\/api\/storico-schede\/scheda\/(\d+)$/))) {
+    if (m === 'PUT') return S.modificaArchiviata(request, env, io, +r[1]);
+    if (m === 'DELETE') return S.eliminaImportata(env, io, +r[1]);
+  }
+  if ((r = p.match(/^\/api\/storico-schede\/scheda\/(\d+)\/attiva$/)) && m === 'POST') return S.copiaComeAttiva(request, env, io, +r[1]);
+
   // Allenamento
   if (p === '/api/allena' && m === 'GET') return A.statoAllenamento(env, io);
   if (p === '/api/giornate' && m === 'POST') return A.avviaGiornata(request, env, io);
@@ -98,7 +107,27 @@ async function api(request, env, url) {
   // Importazione
   if (p === '/api/importa/file' && m === 'POST') return I.daFile(request, env, io);
   if (p === '/api/importa/audio' && m === 'POST') return I.daAudio(request, env, io);
+  if (p === '/api/importa/foto' && m === 'POST') return I.daFoto(request, env, io);
   if (p === '/api/importa/analizza' && m === 'POST') return I.analizza(request, env, io);
+
+  // Mobilità e stretching
+  if (p === '/api/mobilita' && m === 'GET') return M.statoMobilita(env, io);
+  if (p === '/api/mobilita/impostazioni' && m === 'GET') return M.leggiImpostazioni(env, io);
+  if (p === '/api/mobilita/impostazioni' && m === 'PUT') return M.salvaImpostazioni(request, env, io);
+  if (p === '/api/mobilita/libreria' && m === 'GET') return M.elencoLibreria(env, io);
+  if (p === '/api/mobilita/libreria' && m === 'POST') return M.creaEsercizio(request, env, io);
+  if ((r = p.match(/^\/api\/mobilita\/libreria\/(\d+)$/))) {
+    if (m === 'PUT') return M.modificaEsercizio(request, env, io, +r[1]);
+    if (m === 'DELETE') return M.eliminaEsercizio(env, io, +r[1]);
+  }
+  if (p === '/api/mobilita/sessioni' && m === 'POST') return M.avviaSessione(request, env, io);
+  if ((r = p.match(/^\/api\/mobilita\/sessioni\/(\d+)$/))) {
+    if (m === 'GET') return M.leggiSessione(env, io, +r[1]);
+    if (m === 'DELETE') return M.eliminaSessione(env, io, +r[1]);
+  }
+  if ((r = p.match(/^\/api\/mobilita\/sessioni\/(\d+)\/esercizi\/(\d+)$/)) && m === 'PUT') return M.salvaEsito(request, env, io, +r[1], +r[2]);
+  if ((r = p.match(/^\/api\/mobilita\/sessioni\/(\d+)\/passo$/)) && m === 'PUT') return M.cambiaPasso(request, env, io, +r[1]);
+  if ((r = p.match(/^\/api\/mobilita\/sessioni\/(\d+)\/completa$/)) && m === 'POST') return M.completaSessione(env, io, +r[1]);
 
   fallisci(404, 'Indirizzo non trovato');
 }

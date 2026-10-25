@@ -1,6 +1,7 @@
 // GymTime · allenamento dell'atleta e storico
 import { json, corpo, fallisci, testo, intero, parseJSON, oggi, gestibile, leggibile, richiedi } from './util.js';
-import { caricaScheda } from './schede.js';
+import { caricaScheda, queryStoricoSchede } from './schede.js';
+import { querySessioniStorico, sessioneJSON } from './mobilita.js';
 import { valoriSettimana, variazioni, settimanaDi, pulisciParametri, CAMPI_FATTI } from '../public/js/regole.js';
 
 const ESITI = ['fatto', 'modificato', 'non_fatto'];
@@ -195,15 +196,20 @@ export async function storico(env, io, atletaId) {
     'SELECT * FROM giornate WHERE atleta_id = ? ORDER BY data DESC LIMIT 400'
   ).bind(atleta.id).all();
   const ids = JSON.stringify(giornate.map(g => g.id));
-  const [sv, se] = await env.DB.batch([
+  const [sv, se, sc, mo] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM esercizi_svolti WHERE giornata_id IN (SELECT value FROM json_each(?))').bind(ids),
     env.DB.prepare('SELECT * FROM sensazioni WHERE giornata_id IN (SELECT value FROM json_each(?))').bind(ids),
+    queryStoricoSchede(env, atleta.id),
+    querySessioniStorico(env, atleta.id),
   ]);
   const per = (rows) => { const m = new Map(); for (const r of rows) { if (!m.has(r.giornata_id)) m.set(r.giornata_id, []); m.get(r.giornata_id).push(r); } return m; };
   const s1 = per(sv.results), s2 = per(se.results);
   return json({
     atleta: { id: atleta.id, nome: atleta.nome },
     oggi: oggi(),
-    giornate: giornate.map(g => giornataJSON(g, s1.get(g.id) || [], s2.get(g.id) || []))
+    giornate: giornate.map(g => giornataJSON(g, s1.get(g.id) || [], s2.get(g.id) || [])),
+    // Storico delle schede (attiva, archiviate, importate) e sessioni di mobilità
+    schede: sc.results.map(x => ({ ...x, archiviata: !!x.archiviata, attiva: !x.archiviata })),
+    mobilita: mo.results.map(sessioneJSON)
   });
 }

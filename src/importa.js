@@ -1,12 +1,23 @@
-// GymTime · importazione di una scheda da file, voce o testo
-// File e audio non vengono salvati: diventano testo, il testo diventa un'anteprima
+// GymTime · importazione di una scheda da file, foto, voce o testo
+// File, foto e audio non vengono salvati: diventano testo, il testo diventa un'anteprima
 // che il coach controlla e corregge nell'editor prima di salvare.
 import { json, corpo, fallisci, richiedi, testo as pulisci } from './util.js';
 import { leggiTesto, trovaInLibreria, pulisciParametri, MODALITA } from '../public/js/regole.js';
 
 const MAX_FILE = 10 * 1024 * 1024;
 const MAX_AUDIO = 12 * 1024 * 1024;
+const MAX_FOTO = 10 * 1024 * 1024;
 const MODELLO_TESTO = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+// Foto di una scheda (anche scritta a mano): un modello che legge le immagini la trascrive riga per riga.
+// Se il primo non risponde si prova il secondo. Si cambiano qui, in un punto solo.
+const MODELLI_FOTO = ['@cf/google/gemma-4-26b-a4b-it', '@cf/meta/llama-4-scout-17b-16e-instruct'];
+const ISTRUZIONI_FOTO = `Trascrivi la scheda di allenamento che vedi nella foto, così com'è scritta, in italiano.
+Regole:
+- Una riga per esercizio, nello stesso ordine del foglio, con numeri e unità come scritti (es. "Squat 4x8 40 kg rec 90").
+- Mantieni i titoli dei giorni o delle sezioni ("Giorno 1", "Lunedì", "A", "B") su una riga a sé.
+- Se una parola non si legge, scrivi [?] al suo posto. Non inventare esercizi, numeri o note.
+- Ignora nomi di persone, numeri di telefono, firme, loghi e tutto ciò che non è allenamento.
+- Rispondi solo con la trascrizione, senza commenti.`;
 
 function base64(buf) {
   const b = new Uint8Array(buf); let s = '';
@@ -26,11 +37,56 @@ export async function daFile(request, env, io) {
     return json({ testo: (await file.text()).slice(0, 30000) });
   }
   serveAI(env);
-  const blob = new Blob([await file.arrayBuffer()], { type: file.type || 'application/octet-stream' });
+  const buf = await file.arrayBuffer();
+  if (isImmagine(file)) {
+    const t = await trascriviFoto(env, buf, file.type);
+    if (t) return json({ testo: t.slice(0, 30000), metodo: 'foto' });
+  }
+  const blob = new Blob([buf], { type: file.type || 'application/octet-stream' });
   const [r] = await env.AI.toMarkdown([{ name: nome, blob }]);
   if (!r || r.format === 'error') fallisci(422, `Non riesco a leggere questo file${r?.error ? `: ${r.error}` : ''}. Prova con PDF, Word, Excel o una foto nitida.`);
   const t = String(r.data || '').replace(/\n{3,}/g, '\n\n').trim();
   if (!t) fallisci(422, 'Il file sembra vuoto');
+  return json({ testo: t.slice(0, 30000) });
+}
+
+const isImmagine = f => /^image\/(jpeg|png|webp)$/i.test(f.type || '') || /\.(jpe?g|png|webp)$/i.test(f.name || '');
+
+// Testo della risposta, qualunque sia la forma restituita dal modello
+function testoRisposta(r) {
+  const t = typeof r?.response === 'string' ? r.response : r?.choices?.[0]?.message?.content ?? r?.result?.response ?? '';
+  return String(Array.isArray(t) ? t.map(x => x?.text || '').join('') : t)
+    .replace(/<think>[\s\S]*?<\/think>/g, '').replace(/^```[a-z]*\n?|```$/gm, '').trim();
+}
+
+// La foto resta in memoria il tempo della trascrizione: non si salva da nessuna parte
+async function trascriviFoto(env, buf, tipo) {
+  const mime = /^image\/(jpeg|png|webp)$/i.test(tipo || '') ? tipo.toLowerCase() : 'image/jpeg';
+  const url = `data:${mime};base64,${base64(buf)}`;
+  for (const modello of MODELLI_FOTO) {
+    try {
+      const r = await env.AI.run(modello, {
+        messages: [{ role: 'user', content: [{ type: 'text', text: ISTRUZIONI_FOTO }, { type: 'image_url', image_url: { url } }] }],
+        max_tokens: 2048, temperature: 0.1
+      });
+      const t = testoRisposta(r).replace(/\n{3,}/g, '\n\n');
+      if (t.replace(/\[\?\]/g, '').trim().length >= 3) return t;
+    } catch (e) { console.log(`Trascrizione con ${modello} non riuscita:`, e?.message); }
+  }
+  return '';
+}
+
+// "Scatta foto": il telefono rimpicciolisce la foto prima dell'invio (meno dati, niente posizione GPS)
+export async function daFoto(request, env, io) {
+  richiedi(io, 'admin', 'coach');
+  serveAI(env);
+  const form = await request.formData().catch(() => fallisci(400, 'Scatta o scegli una foto'));
+  const foto = form.get('foto');
+  if (!foto || typeof foto === 'string') fallisci(400, 'Scatta o scegli una foto');
+  if (!isImmagine(foto)) fallisci(415, 'Serve una foto in formato JPEG, PNG o WebP');
+  if (foto.size > MAX_FOTO) fallisci(413, 'Foto troppo grande: massimo 10 MB');
+  const t = await trascriviFoto(env, await foto.arrayBuffer(), foto.type);
+  if (!t) fallisci(422, 'Non riesco a leggere la foto: riprova con più luce, foglio dritto e inquadrato tutto');
   return json({ testo: t.slice(0, 30000) });
 }
 

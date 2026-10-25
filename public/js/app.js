@@ -151,8 +151,8 @@ async function home() {
         : `<p class="hint">Per allenarti anche tu, apri ${io.ruolo === 'admin' ? 'Persone' : 'Atleti'}, scegli il tuo profilo e crea la tua scheda.</p>`}`;
   }
   app.querySelector('main').innerHTML = corpo;
-  const fa = document.getElementById('fig-allena'); if (fa) montaOmino(fa, 'squat_bil', { tempo: '1.6-0.3-1.2-0.6' });
-  const fp = document.getElementById('fig-persone'); if (fp) montaOmino(fp, 'stacco', { tempo: '1.4-0.4-1.2-0.6' });
+  const fa = document.getElementById('fig-allena'); if (fa) montaOmino(fa, 'squat_bil', { tempo: '1.6-0.3-1.2-0.6', muscoli: 'quadricipite, gluteo' });
+  const fp = document.getElementById('fig-persone'); if (fp) montaOmino(fp, 'stacco', { tempo: '1.4-0.4-1.2-0.6', muscoli: 'gluteo, femorali, erettori' });
 }
 
 /* ---------- Profilo ---------- */

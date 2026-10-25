@@ -3,6 +3,10 @@
 // mani e piedi appoggiati restano fermi grazie alla cinematica inversa, quindi
 // ginocchia e gomiti si piegano come nel corpo vero. Il ritmo segue il tempo
 // esecutivo (eccentrica-fermo-concentrica-fermo) e la fase da cui si parte.
+// Di lato gomiti e ginocchia scelgono sempre la piegatura anatomica: il gomito
+// si chiude verso il bicipite, il ginocchio verso il polpaccio.
+// Il corpo è muscoloso: ogni osso ha il suo profilo con i ventri muscolari,
+// e i muscoli che lavorano (dal campo "muscoli" della libreria) si accendono in oro.
 
 const L = { tr: 15, nk: 5.4, hr: 4, ua: 9, fa: 8.6, th: 11, sh: 11, ft: 3.6 };
 const G = 54.5;                 // linea del pavimento
@@ -35,8 +39,8 @@ export const POSE = {
     st({ t: 3, arms: { a: [8, 14] } }),
     st({ hip: [20.5, 43], t: 40, arms: { a: [86, 92] } })] },
   squat_bil: { nome: 'Squat con bilanciere dietro', inizia: 'ecc', props: [{ p: 'bil', at: 'w1', r: 4.6 }], keys: [
-    st({ t: 4, arms: { ik: [-2.4, 2], f: 't', b: 1 } }),
-    st({ hip: [20, 43], t: 44, arms: { ik: [-2.4, 2], f: 't', b: 1 } })] },
+    st({ t: 4, arms: { ik: [-2.4, 2], f: 't', b: 1, libero: true } }),
+    st({ hip: [20, 43], t: 44, arms: { ik: [-2.4, 2], f: 't', b: 1, libero: true } })] },
   front_squat: { nome: 'Front squat', inizia: 'ecc', props: [{ p: 'bil', at: 'w1' }], keys: [
     st({ t: 2, arms: { ik: [3.2, 1.2], f: 't', b: -1 } }),
     st({ hip: [22, 44], t: 22, arms: { ik: [3.2, 1.2], f: 't', b: -1 } })] },
@@ -47,8 +51,8 @@ export const POSE = {
     st({ t: 0, arms: { a: [181, 181] } }),
     st({ hip: [21.5, 43.5], t: 30, arms: { a: [178, 178] } })] },
   box_squat: { nome: 'Box squat', inizia: 'ecc', props: [{ p: 'bil', at: 'w1', r: 4.6 }, { p: 'box', x1: 9, x2: 22, y: 44.8 }], keys: [
-    st({ t: 4, arms: { ik: [-2.4, 2], f: 't', b: 1 } }),
-    st({ hip: [20, 42.6], t: 38, arms: { ik: [-2.4, 2], f: 't', b: 1 } })] },
+    st({ t: 4, arms: { ik: [-2.4, 2], f: 't', b: 1, libero: true } }),
+    st({ hip: [20, 42.6], t: 38, arms: { ik: [-2.4, 2], f: 't', b: 1, libero: true } })] },
   affondo: { nome: 'Affondo', inizia: 'ecc', keys: [
     { hip: [29, 32.6], t: 0, legs: [{ ik: [36.5, 53] }, { ik: [21.5, 52.2], toe: [24.6, 54.4] }], arms: { a: [3, 8] } },
     { hip: [28.5, 41.5], t: 2, legs: [{ ik: [36.5, 53] }, { ik: [21.5, 52.2], toe: [24.6, 54.4] }], arms: { a: [3, 8] } }] },
@@ -73,14 +77,14 @@ export const POSE = {
     { hip: [40.5, 19.6], t: 0, legs: { ik: [41, 40.4] }, arms: { a: [3, 8] } }],
     seg: [0.45, 0.35, 0.4, 0.9] },
   leg_press: { nome: 'Leg press', inizia: 'ecc', g: null, props: [{ p: 'linea', a: [6, 24], b: [22, 44] }, { p: 'linea', a: [22, 44], b: [40, 44] }, { p: 'piatto', at: 'a1', ang: 45 }], keys: [
-    { hip: [21, 41.5], t: -52, legs: { ik: [37, 24.8], toe: 'perp' }, arms: { a: [20, 60] } },
+    { hip: [21, 41.5], t: -52, legs: { ik: [36, 25.8], toe: 'perp' }, arms: { a: [20, 60] } },
     { hip: [21, 41.5], t: -52, legs: { ik: [29.5, 32.5], toe: 'perp' }, arms: { a: [20, 60] } }] },
   leg_ext: { nome: 'Leg extension', inizia: 'conc', props: [{ p: 'panca', x1: 16, x2: 35, y: 42.4 }, { p: 'linea', a: [17, 42.4], b: [13, 24] }, { p: 'rullo', at: 'a1' }], keys: [
     { hip: [21, 40.2], t: -8, legs: { a: [92, 2] }, arms: { a: [10, 40] } },
     { hip: [21, 40.2], t: -8, legs: { a: [92, 86] }, arms: { a: [10, 40] } }] },
   leg_curl: { nome: 'Leg curl sdraiato', inizia: 'conc', props: [{ p: 'panca', x1: 10, x2: 46, y: 45.6 }, { p: 'rullo', at: 'a1' }], keys: [
-    { hip: [26, 43.4], t: 90, hd: -8, legs: { a: [-89, -89] }, arms: { a: [20, -10] } },
-    { hip: [26, 43.4], t: 90, hd: -8, legs: { a: [-89, -170] }, arms: { a: [20, -10] } }] },
+    { hip: [26, 43.4], t: 90, hd: -8, legs: { a: [-89, -89] }, arms: { a: [8, 40] } },
+    { hip: [26, 43.4], t: 90, hd: -8, legs: { a: [-89, -170] }, arms: { a: [8, 40] } }] },
   leg_curl_seduto: { nome: 'Leg curl seduto', inizia: 'conc', props: [{ p: 'panca', x1: 16, x2: 35, y: 42.4 }, { p: 'linea', a: [17, 42.4], b: [13, 24] }, { p: 'rullo', at: 'a1' }], keys: [
     { hip: [21, 40.2], t: -8, legs: { a: [92, 82] }, arms: { a: [10, 40] } },
     { hip: [21, 40.2], t: -8, legs: { a: [92, -18] }, arms: { a: [10, 40] } }] },
@@ -105,7 +109,7 @@ export const POSE = {
     st({ hip: [21, 40.2], t: 56, hd: -18, arms: { ik: [32, 49], b: -1 } }),
     st({ t: -3, arms: { ik: [31.6, 34.4], b: -1 } })] },
   stacco_sumo: { nome: 'Stacco sumo', inizia: 'conc', props: [{ p: 'bil', at: 'w1' }], keys: [
-    st({ hip: [23.5, 41.5], t: 40, hd: -12, legs: { ik: [31, 53] }, arms: { ik: [32.5, 49], b: -1 } }),
+    st({ hip: [23.5, 42.2], t: 40, hd: -12, legs: { ik: [31, 53] }, arms: { ik: [32.5, 49], b: -1 } }),
     st({ t: -3, legs: { ik: [31, 53] }, arms: { ik: [31.6, 34.4], b: -1 } })] },
   rdl: { nome: 'Stacco rumeno', inizia: 'ecc', props: [{ p: 'bil', at: 'w1' }], keys: [
     st({ arms: { a: [2, 4] } }),
@@ -114,8 +118,8 @@ export const POSE = {
     st({ arms: { a: [2, 4] } }),
     st({ hip: [23.5, 32.4], t: 74, hd: -14, legs: { ik: [30, 53] }, arms: { a: [-2, 0] } })] },
   good_morning: { nome: 'Good morning', inizia: 'ecc', props: [{ p: 'bil', at: 'w1', r: 4.6 }], keys: [
-    st({ arms: { ik: [-2.4, 2], f: 't', b: 1 } }),
-    st({ hip: [24, 32.2], t: 72, hd: -12, arms: { ik: [-2.4, 2], f: 't', b: 1 } })] },
+    st({ arms: { ik: [-2.4, 2], f: 't', b: 1, libero: true } }),
+    st({ hip: [24, 32.2], t: 72, hd: -12, arms: { ik: [-2.4, 2], f: 't', b: 1, libero: true } })] },
   swing: { nome: 'Swing russo', inizia: 'conc', props: [{ p: 'kb', at: 'w1' }], keys: [
     st({ hip: [23, 33.5], t: 62, hd: -14, arms: { a: [-28, -28] } }),
     st({ t: -4, arms: { a: [92, 92] } })], tempo: '0.6-0-0.5-0' },
@@ -130,14 +134,14 @@ export const POSE = {
     { hip: [26.5, 48], nk: [15.5, 40.6], hd: 22, legs: { ik: [37.5, 53], b: 1 }, arms: { ik: [0, -2.6], f: 'h', b: 1 } },
     { hip: [29.8, 40.4], nk: [15.5, 40.4], hd: 30, legs: { ik: [37.5, 53], b: 1 }, arms: { ik: [0, -2.6], f: 'h', b: 1 } }] },
   ponte: { nome: 'Ponte glutei', inizia: 'conc', keys: [
-    { hip: [27, 50.8], nk: [12, 50.8], hd: 8, legs: { ik: [36.5, 53], b: 1 }, arms: { a: [-88, -88] } },
-    { hip: [28.6, 44.2], nk: [13.4, 50.4], hd: 14, legs: { ik: [36.5, 53], b: 1 }, arms: { a: [-88, -88] } }] },
+    { hip: [27, 50.8], nk: [12, 50.8], hd: 8, legs: { ik: [36.5, 53], b: 1 }, arms: { a: [86, 88] } },
+    { hip: [28.6, 44.2], nk: [13.4, 50.4], hd: 14, legs: { ik: [36.5, 53], b: 1 }, arms: { a: [86, 88] } }] },
   hyper: { nome: 'Hyperextension', inizia: 'conc', props: [{ p: 'linea', a: [24, 43], b: [33, 35] }, { p: 'linea', a: [12, 54.5], b: [29, 39] }, { p: 'rullo', at: 'a1' }], keys: [
     { hip: [30.5, 37.5], t: 160, hd: -10, legs: { ik: [15, 51.5], toe: 'perp' }, arms: { ik: [2, 3], f: 't', b: -1 } },
     { hip: [30.5, 37.5], t: 46, hd: 0, legs: { ik: [15, 51.5], toe: 'perp' }, arms: { ik: [2, 3], f: 't', b: -1 } }] },
   kickback_glutei: { nome: 'Kickback glutei ai cavi', inizia: 'conc', props: [{ p: 'cavo', at: 'a2', to: [4, 52] }], keys: [
-    { hip: [30, 31.4], t: 12, legs: [{ ik: [30, 53] }, { a: [2, 4] }], arms: { a: [60, 40] } },
-    { hip: [30, 31.4], t: 18, legs: [{ ik: [30, 53] }, { a: [-42, -40] }], arms: { a: [60, 40] } }] },
+    { hip: [30, 31.4], t: 12, legs: [{ ik: [30, 53] }, { a: [2, 4] }], arms: { a: [48, 78] } },
+    { hip: [30, 31.4], t: 18, legs: [{ ik: [30, 53] }, { a: [-42, -40] }], arms: { a: [48, 78] } }] },
 
   /* --- Spinta orizzontale --- */
   push: { nome: 'Piegamento', inizia: 'ecc', keys: [
@@ -157,7 +161,7 @@ export const POSE = {
     { ...linea([8, 52.6], 26), hd: -6, legs: [{ ik: [8, 52.6], toe: [9.4, 54.4] }, { ik: [30, 49.5], toe: 'perp' }], arms: { ik: [41.5, 53.2], b: -1 } },
     { ...linea([8, 52.6], 26), hd: -6, legs: [{ ik: [30, 49.5], toe: 'perp' }, { ik: [8, 52.6], toe: [9.4, 54.4] }], arms: { ik: [41.5, 53.2], b: -1 } }], tempo: '0.35-0-0.35-0' },
   ab_wheel: { nome: 'Ab wheel', inizia: 'ecc', props: [{ p: 'ruota', at: 'w1' }], keys: [
-    { hip: [22.5, 41.5], t: 50, hd: -12, legs: { ik: [10, 52.6], b: -1, toe: 'perp' }, arms: { ik: [33, 52], b: -1 } },
+    { hip: [22.5, 43.5], t: 50, hd: -12, legs: { ik: [10, 52.6], b: -1, toe: 'perp' }, arms: { ik: [33, 52], b: -1 } },
     { hip: [28.5, 46.6], t: 82, hd: -12, legs: { ik: [10, 52.6], b: -1, toe: 'perp' }, arms: { ik: [51.5, 52], b: -1 } }] },
   burpee: { nome: 'Burpee', inizia: 'conc', sc: [0.9, 30, G], keys: [
     st({ arms: { a: [5, 10] } }),
@@ -175,24 +179,24 @@ export const POSE = {
     { hip: [29, 41.8], t: -90, hd: 4, legs: { ik: [40, 53], b: 1 }, arms: { ik: [15.5, 24.6], b: 1 } },
     { hip: [29, 41.8], t: -90, hd: 4, legs: { ik: [40, 53], b: 1 }, arms: { ik: [16, 37.4], b: 1 } }] },
   panca_incl: { nome: 'Panca inclinata', inizia: 'ecc', props: [{ p: 'linea', a: [29, 44], b: [12, 30] }, { p: 'linea', a: [29, 44], b: [29, 54.5] }, { p: 'bil', at: 'w1' }], keys: [
-    { hip: [28.5, 41.6], t: -55, hd: 8, legs: { ik: [40, 53], b: 1 }, arms: { ik: [21.5, 14.5], b: 1 } },
+    { hip: [28.5, 41.6], t: -55, hd: 8, legs: { ik: [40, 53], b: 1 }, arms: { ik: [21, 16.8], b: 1 } },
     { hip: [28.5, 41.6], t: -55, hd: 8, legs: { ik: [40, 53], b: 1 }, arms: { ik: [20.5, 28.5], b: 1 } }] },
   chest_press: { nome: 'Chest press', inizia: 'conc', props: [{ p: 'panca', x1: 14, x2: 30, y: 42.4 }, { p: 'linea', a: [15, 42.4], b: [12, 20] }, { p: 'cavo', at: 'w1', to: [52, 22] }], keys: [
     { hip: [19, 40.2], t: -6, legs: { ik: [33, 53], b: 1 }, arms: { ik: [26.5, 25.6], b: -1 } },
     { hip: [19, 40.2], t: -6, legs: { ik: [33, 53], b: 1 }, arms: { ik: [34.8, 25.6], b: -1 } }] },
   croci: { nome: 'Croci e pec deck', vista: 'fronte', inizia: 'conc', props: [{ p: 'man', at: 'w1' }, { p: 'man', at: 'w2' }], keys: [
     st({ legs: { a: [6, 4] }, arms: { a: [96, 102] } }),
-    st({ legs: { a: [6, 4] }, arms: { a: [62, -88] } })] },
-  pullover: { nome: 'Pullover', inizia: 'ecc', props: [{ p: 'panca', x1: 5, x2: 33, y: 44.2 }, { p: 'peso', at: 'w1', r: 2.6 }], keys: [
-    { hip: [29, 41.8], t: -90, hd: 4, legs: { ik: [40, 53], b: 1 }, arms: { a: [192, 200] } },
-    { hip: [29, 41.8], t: -90, hd: 4, legs: { ik: [40, 53], b: 1 }, arms: { a: [262, 272] } }] },
+    st({ legs: { a: [6, 4] }, arms: { a: [62, 272] } })] },
+  pullover: { nome: 'Pullover', inizia: 'ecc', props: [{ p: 'panca', x1: 11, x2: 39, y: 44.2 }, { p: 'peso', at: 'w1', r: 2.6 }], keys: [
+    { hip: [35, 41.8], t: -90, hd: 4, legs: { ik: [46, 53], b: 1 }, arms: { a: [192, 200] } },
+    { hip: [35, 41.8], t: -90, hd: 4, legs: { ik: [46, 53], b: 1 }, arms: { a: [252, 262] } }] },
 
   /* --- Spinta verticale --- */
   press: { nome: 'Military press', inizia: 'conc', sc: [0.86, 30, G], props: [{ p: 'bil', at: 'w1', r: 4.2 }], keys: [
     st({ t: -3, hd: -6, arms: { ik: [3.4, 2.2], f: 't', b: -1 } }),
     st({ t: 0, arms: { a: [179, 179] } })] },
   press_man: { nome: 'Lento con manubri', inizia: 'conc', sc: [0.86, 30, G], props: [{ p: 'panca', x1: 16, x2: 34, y: 42.4 }, { p: 'man', at: 'w1' }], keys: [
-    { hip: [26, 40.2], t: -4, legs: { ik: [38, 53], b: 1 }, arms: { a: [-60, 172] } },
+    { hip: [26, 40.2], t: -4, legs: { ik: [38, 53], b: 1 }, arms: { a: [20, 178] } },
     { hip: [26, 40.2], t: -4, legs: { ik: [38, 53], b: 1 }, arms: { a: [176, 178] } }] },
   push_press: { nome: 'Push press', inizia: 'conc', sc: [0.86, 30, G], props: [{ p: 'bil', at: 'w1', r: 4.6 }], keys: [
     st({ t: -2, arms: { ik: [3.4, 2.2], f: 't', b: -1 } }),
@@ -213,34 +217,34 @@ export const POSE = {
     { hip: [27, 25], t: 158, hd: 0, legs: { ik: [14, 37.6], toe: [15.4, 39.4] }, arms: { ik: [33.5, 53.2], b: -1 } },
     { hip: [28, 27], t: 172, hd: 0, legs: { ik: [14, 37.6], toe: [15.4, 39.4] }, arms: { ik: [33.5, 53.2], b: -1 } }] },
   hspu: { nome: 'Verticale al muro con piegamento', inizia: 'ecc', sc: [0.84, 30, G], props: [{ p: 'muro', x: 45.5 }], keys: [
-    { hip: [41, 20.2], t: 181, hd: 0, legs: { a: [176, 178] }, arms: { ik: [38.5, 53.2], b: 1 } },
+    { hip: [40.8, 22.2], t: 181, hd: 0, legs: { a: [176, 178] }, arms: { ik: [38.5, 53.2], b: 1 } },
     { hip: [40, 28], t: 178, hd: 0, legs: { a: [174, 176] }, arms: { ik: [38.5, 53.2], b: 1 } }] },
   verticale: { nome: 'Verticale al muro', inizia: 'ecc', sc: [0.84, 30, G], tenuta: 0, props: [{ p: 'muro', x: 45.5 }], keys: [
-    { hip: [41, 20.2], t: 181, hd: 0, legs: { a: [176, 178] }, arms: { ik: [38.5, 53.2], b: 1 } }] },
+    { hip: [40.8, 22.2], t: 181, hd: 0, legs: { a: [176, 178] }, arms: { ik: [38.5, 53.2], b: 1 } }] },
 
   /* --- Trazioni e tirate --- */
   trazione: { nome: 'Trazione alla sbarra', inizia: 'conc', g: null, sc: [0.86, 30, 4], props: [{ p: 'sbarra', x: 31.5, y: 4 }], keys: [
-    { hip: [30, 37.4], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } },
+    { hip: [30.1, 35.3], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } },
     { hip: [28.6, 22.4], t: -9, hd: 6, legs: { a: [12, -12] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
   trazione_zav: { nome: 'Trazione zavorrata', inizia: 'conc', g: null, sc: [0.86, 30, 4], props: [{ p: 'sbarra', x: 31.5, y: 4 }, { p: 'peso', at: 'hip', r: 3, off: [1.5, 6] }], keys: [
-    { hip: [30, 37.4], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } },
+    { hip: [30.1, 35.3], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } },
     { hip: [28.6, 22.4], t: -9, hd: 6, legs: { a: [12, -12] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
   dead_hang: { nome: 'Sospensione alla sbarra', inizia: 'conc', g: null, sc: [0.86, 30, 4], tenuta: 0, props: [{ p: 'sbarra', x: 31.5, y: 4 }], keys: [
-    { hip: [30, 37.4], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
+    { hip: [30.1, 35.3], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
   scapolari: { nome: 'Trazioni scapolari', inizia: 'conc', g: null, sc: [0.86, 30, 4], props: [{ p: 'sbarra', x: 31.5, y: 4 }], keys: [
-    { hip: [30, 37.4], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } },
-    { hip: [29.6, 34.6], t: -4, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
+    { hip: [30.1, 35.3], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } },
+    { hip: [29.7, 32.6], t: -4, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
   muscle_up: { nome: 'Muscle up', inizia: 'conc', g: null, sc: [0.72, 30, 30], props: [{ p: 'sbarra', x: 31, y: 18 }], keys: [
-    { hip: [30, 51.6], t: 0, legs: { a: [6, -6] }, arms: { ik: [31, 18.2], b: 1 } },
-    { hip: [26.5, 38], t: -18, hd: 8, legs: { a: [30, 10] }, arms: { ik: [31, 18.2], b: 1 } },
-    { hip: [29.5, 28], t: 30, hd: -10, legs: { a: [-10, -20] }, arms: { ik: [31, 18.2], b: 1 } },
-    { hip: [30.5, 19.5], t: 6, legs: { a: [10, -6] }, arms: { ik: [31, 18.2], b: -1 } }],
+    { hip: [30, 49.4], t: 0, legs: { a: [6, -6] }, arms: { ik: [31, 18.2] } },
+    { hip: [26.5, 38], t: -18, hd: 8, legs: { a: [30, 10] }, arms: { ik: [31, 18.2] } },
+    { hip: [26.6, 25.4], t: 32, hd: -10, legs: { a: [-4, -24] }, arms: { ik: [31, 18.2] } },
+    { hip: [30.4, 14.9], t: 4, legs: { a: [8, -6] }, arms: { ik: [31, 18.2] } }],
     seg: [0.7, 0.35, 0.6, 1.2] },
-  trazione_aus: { nome: 'Trazione australiana', inizia: 'conc', props: [{ p: 'sbarra', x: 31, y: 24.5, basso: true }], keys: [
-    { ...linea([2, 52.6], 19.5), hd: 4, legs: { ik: [2, 52.6], toe: [2.4, 49.2] }, arms: { ik: [31, 24.7], b: 1 } },
-    { ...linea([2, 52.6], 44), hd: 4, legs: { ik: [2, 52.6], toe: [2.4, 49.2] }, arms: { ik: [31, 24.7], b: 1 } }] },
+  trazione_aus: { nome: 'Trazione australiana', inizia: 'conc', props: [{ p: 'sbarra', x: 27, y: 24.5, basso: true }], keys: [
+    { ...linea([48.5, 52.6], 155), hd: 4, legs: { ik: [48.5, 52.6], toe: [48.1, 49.2] }, arms: { ik: [27, 24.7] } },
+    { ...linea([48.5, 52.6], 131.4), hd: 4, legs: { ik: [48.5, 52.6], toe: [48.1, 49.2] }, arms: { ik: [27, 24.7] } }] },
   lat: { nome: 'Lat machine', inizia: 'conc', props: [{ p: 'panca', x1: 18, x2: 34, y: 42.4 }, { p: 'cavo', at: 'w1', to: [30, 1] }, { p: 'maniglia', at: 'w1' }, { p: 'rullo', at: 'k1', off: [0, -2.4] }], keys: [
-    { hip: [26, 40.2], t: -8, legs: { ik: [36, 53], b: 1 }, arms: { ik: [29.5, 7.2], b: 1 } },
+    { hip: [26, 40.2], t: -8, legs: { ik: [36, 53], b: 1 }, arms: { ik: [28.8, 9.8], b: 1 } },
     { hip: [26, 40.2], t: -16, legs: { ik: [36, 53], b: 1 }, arms: { ik: [29.8, 22.6], b: 1 } }] },
   pulley: { nome: 'Pulley basso', inizia: 'conc', props: [{ p: 'panca', x1: 12, x2: 30, y: 47.8 }, { p: 'linea', a: [44, 54.5], b: [44, 40] }, { p: 'cavo', at: 'w1', to: [54, 43] }, { p: 'maniglia', at: 'w1' }], keys: [
     { hip: [21, 45.6], t: 16, legs: { ik: [42.5, 47.5], b: 1, toe: 'perp' }, arms: { ik: [40.5, 36.6], b: -1 } },
@@ -262,12 +266,33 @@ export const POSE = {
     st({ legs: { a: [6, 4] }, arms: { a: [8, 6] }, sy: 2.6 })] },
 
   /* --- Dip --- */
-  dip: { nome: 'Dip alle parallele', inizia: 'ecc', props: [{ p: 'parallele', x: 31.5, y: 32 }], keys: [
-    { hip: [30, 30.4], t: 2, legs: { ik: [24, 48.5], b: 1, toe: 'perp' }, arms: { ik: [31.5, 32.2], b: -1 } },
-    { hip: [28.5, 39.6], t: 20, legs: { ik: [21.6, 57.5], b: 1, toe: 'perp' }, arms: { ik: [31.5, 32.2], b: -1 } }] },
+  dip: { nome: 'Dip alle parallele', inizia: 'ecc', sc: [0.8, 30, G], props: [{ p: 'parallele', x1: 10, x2: 52, y: 20.7 }], keys: [
+    { hip: [30.3, 16.3], t: 4, legs: { a: [-4, -46] }, arms: { ik: [31.5, 19.6] } },
+    { hip: [29.8, 23.3], t: 22, hd: -6, legs: { a: [-10, -56] }, arms: { ik: [31.5, 19.6] } }] },
+  sostegno_parallele: { nome: 'Sostegno alle parallele', inizia: 'ecc', sc: [0.8, 30, G], tenuta: 0, props: [{ p: 'parallele', x1: 10, x2: 52, y: 20.7 }], keys: [
+    { hip: [30.3, 16.3], t: 4, legs: { a: [-4, -46] }, arms: { ik: [31.5, 19.6] } }] },
   dip_panca: { nome: 'Dip alla panca', inizia: 'ecc', props: [{ p: 'panca', x1: 3, x2: 16, y: 38.6 }], keys: [
     { hip: [18, 36.6], t: -2, legs: { ik: [31, 53], b: 1 }, arms: { ik: [15, 38.4], b: -1 } },
     { hip: [18.6, 45], t: 4, legs: { ik: [31, 53], b: 1 }, arms: { ik: [15, 38.4], b: -1 } }] },
+
+  /* --- Anelli --- */
+  dip_anelli: { nome: 'Dip agli anelli', inizia: 'ecc', sc: [0.8, 30, G], props: [{ p: 'anelli', at: 'w2', ay: -40 }, { p: 'anelli', at: 'w1', ay: -40 }], keys: [
+    { hip: [30.3, 16.3], t: 4, legs: { a: [-4, -46] }, arms: { ik: [31.5, 19.6] } },
+    { hip: [29.8, 23.3], t: 22, hd: -6, legs: { a: [-10, -56] }, arms: { ik: [31.5, 19.6] } }] },
+  sostegno_anelli: { nome: 'Sostegno agli anelli', inizia: 'ecc', sc: [0.8, 30, G], tenuta: 0, props: [{ p: 'anelli', at: 'w2', ay: -40 }, { p: 'anelli', at: 'w1', ay: -40 }], keys: [
+    { hip: [30.3, 16.3], t: 4, legs: { a: [-4, -46] }, arms: { ik: [31.5, 19.6] } }] },
+  trazione_anelli: { nome: 'Trazione agli anelli', inizia: 'conc', g: null, sc: [0.86, 30, 4], props: [{ p: 'anelli', at: 'w2', ay: -40 }, { p: 'anelli', at: 'w1', ay: -40 }], keys: [
+    { hip: [30.1, 35.3], t: 0, legs: { a: [6, -6] }, arms: { ik: [31.5, 4.2] } },
+    { hip: [28.6, 22.4], t: -9, hd: 6, legs: { a: [12, -12] }, arms: { ik: [31.5, 4.2] } }] },
+  rematore_anelli: { nome: 'Rematore agli anelli', inizia: 'conc', props: [{ p: 'anelli', at: 'w2', ay: -40 }, { p: 'anelli', at: 'w1', ay: -40 }], keys: [
+    { ...linea([48.5, 52.6], 155), hd: 4, legs: { ik: [48.5, 52.6], toe: [48.1, 49.2] }, arms: { ik: [27, 24.7] } },
+    { ...linea([48.5, 52.6], 131.4), hd: 4, legs: { ik: [48.5, 52.6], toe: [48.1, 49.2] }, arms: { ik: [27, 24.7] } }] },
+  muscle_up_anelli: { nome: 'Muscle up agli anelli', inizia: 'conc', g: null, sc: [0.72, 30, 30], props: [{ p: 'anelli', at: 'w2', ay: -40 }, { p: 'anelli', at: 'w1', ay: -40 }], keys: [
+    { hip: [30, 49.4], t: 0, legs: { a: [6, -6] }, arms: { ik: [31, 18.2] } },
+    { hip: [26.5, 38], t: -18, hd: 8, legs: { a: [30, 10] }, arms: { ik: [31, 18.2] } },
+    { hip: [26.6, 25.4], t: 32, hd: -10, legs: { a: [-4, -24] }, arms: { ik: [31, 18.2] } },
+    { hip: [30.4, 14.9], t: 4, legs: { a: [8, -6] }, arms: { ik: [31, 18.2] } }],
+    seg: [0.7, 0.35, 0.6, 1.2] },
 
   /* --- Braccia --- */
   curl: { nome: 'Curl con bilanciere', inizia: 'conc', props: [{ p: 'bil', at: 'w1', r: 4.4 }], keys: [
@@ -313,11 +338,11 @@ export const POSE = {
     { hip: [28, 50.8], t: -90, hd: 8, legs: { ik: [39, 53], b: 1 }, arms: { ik: [2.6, 3.4], f: 't', b: -1 } },
     { hip: [28, 50.8], t: -6, hd: 8, legs: { ik: [39, 53], b: 1 }, arms: { ik: [2.6, 3.4], f: 't', b: -1 } }] },
   leg_raise: { nome: 'Leg raise alla sbarra', inizia: 'conc', g: null, sc: [0.86, 30, 4], props: [{ p: 'sbarra', x: 31.5, y: 4 }], keys: [
-    { hip: [30, 37.4], t: 0, legs: { a: [4, 2] }, arms: { ik: [31.5, 4.2], b: 1 } },
-    { hip: [28, 37], t: -10, legs: { a: [92, 92] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
+    { hip: [30.1, 35.3], t: 0, legs: { a: [4, 2] }, arms: { ik: [31.5, 4.2], b: 1 } },
+    { hip: [28.7, 34.3], t: -10, legs: { a: [92, 92] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
   knee_raise: { nome: 'Knee raise alla sbarra', inizia: 'conc', g: null, sc: [0.86, 30, 4], props: [{ p: 'sbarra', x: 31.5, y: 4 }], keys: [
-    { hip: [30, 37.4], t: 0, legs: { a: [4, 2] }, arms: { ik: [31.5, 4.2], b: 1 } },
-    { hip: [29, 36.6], t: -8, legs: { a: [110, 8] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
+    { hip: [30.1, 35.3], t: 0, legs: { a: [4, 2] }, arms: { ik: [31.5, 4.2], b: 1 } },
+    { hip: [29.4, 34.7], t: -8, legs: { a: [110, 8] }, arms: { ik: [31.5, 4.2], b: 1 } }] },
   dead_bug: { nome: 'Dead bug', inizia: 'conc', keys: [
     { hip: [30, 50.8], t: -90, hd: 8, legs: { a: [180, 90] }, arms: { a: [180, 180] } },
     { hip: [30, 50.8], t: -90, hd: 8, legs: [{ a: [180, 90] }, { a: [100, 100] }], arms: [{ a: [256, 256] }, { a: [180, 180] }] }] },
@@ -350,8 +375,23 @@ function ik(root, target, l1, l2, b) {
 }
 function fk(root, a, l1, l2) { const m = add(root, dir(a[0]), l1); return [m, add(m, dir(a[1]), l2)]; }
 
+// Flessione con segno: positiva se il gomito si chiude verso il bicipite
+// (o il ginocchio verso il polpaccio). Vale per ogni rotazione del corpo.
+function flessione(root, [mid, end], gambe) {
+  const u = [mid[0] - root[0], mid[1] - root[1]], v = [end[0] - mid[0], end[1] - mid[1]];
+  const c = Math.atan2(u[0] * v[1] - u[1] * v[0], u[0] * v[0] + u[1] * v[1]);
+  return gambe ? c : -c;
+}
+
 // Angoli assoluti di un arto già risolto (per interpolare specifiche miste)
 const angoliDi = (root, mid, end) => [ang(mid[0] - root[0], mid[1] - root[1]), ang(end[0] - mid[0], end[1] - mid[1])];
+
+// Angolo del segmento vicino rispetto al busto (0 = lungo il busto verso il basso, + in avanti)
+// e piega dell'articolazione (+ = flessione anatomica), entrambi senza salti di 360°
+const fascia = (x, da) => { let v = ((x - da) % 360 + 360) % 360; return v + da; };
+function giunti(a, t, gambe) {
+  return [fascia(a[0] + t, -100), fascia(gambe ? a[0] - a[1] : a[1] - a[0], -90)];
+}
 
 function busto(k) {
   const t = k.nk ? ang(k.nk[0] - k.hip[0], -(k.nk[1] - k.hip[1])) : (k.t || 0);
@@ -371,7 +411,10 @@ function risolviArto(spec, root, ctx, l1, l2, i, specchio) {
     tg = [tg[0] + ctx.dx, tg[1]];
     let b = spec.b ?? def;
     if (specchio) b = -b;
-    return ik(root, tg, l1, l2, b);
+    if (ctx.vista === 'fronte' || spec.libero) return ik(root, tg, l1, l2, b);
+    // Di lato: delle due piegature possibili tengo quella anatomica
+    const s1 = ik(root, tg, l1, l2, 1), s2 = ik(root, tg, l1, l2, -1);
+    return flessione(root, s1, ctx.gambe) >= flessione(root, s2, ctx.gambe) ? s1 : s2;
   }
   let a = spec.a || [0, 0];
   if (ctx.vista === 'fronte') {
@@ -419,10 +462,22 @@ function posa(P, kA, kB, u) {
         [mid, end] = risolviArto(s, root, ctx, l1, l2, i, specchio);
       } else if (sA === sB) {
         [mid, end] = risolviArto(sA, root, ctx, l1, l2, i, specchio);
+      } else if (!sA.ik && !sB.ik) {
+        const aA = sA.a || [0, 0], aB = sB.a || [0, 0];
+        [mid, end] = risolviArto({ a: [lerp(aA[0], aB[0], u), lerp(aA[1], aB[1], u)] }, root, ctx, l1, l2, i, specchio);
       } else {
         const ra = risolviArto(sA, root, ctx, l1, l2, i, specchio), rb = risolviArto(sB, root, ctx, l1, l2, i, specchio);
         const aa = angoliDi(root, ...ra), ab = angoliDi(root, ...rb);
-        [mid, end] = fk(root, [lerpA(aa[0], ab[0], u), lerpA(aa[1], ab[1], u)], l1, l2);
+        if (vista === 'fronte') {
+          [mid, end] = fk(root, [lerpA(aa[0], ab[0], u), lerpA(aa[1], ab[1], u)], l1, l2);
+        } else {
+          // Di lato: angolo rispetto al busto e piega dell'articolazione, senza scorciatoie dietro la schiena
+          const ta = busto(kA), tb = busto(kB);
+          const ga = giunti(aa, ta, gambe), gb = giunti(ab, tb, gambe);
+          const rel = lerp(ga[0], gb[0], u), pg = lerp(ga[1], gb[1], u);
+          const a0 = rel - t;
+          [mid, end] = fk(root, [a0, gambe ? a0 - pg : a0 + pg], l1, l2);
+        }
       }
       J[chiave + (i + 1)] = mid;
       J[(gambe ? 'a' : 'w') + (i + 1)] = end;
@@ -432,7 +487,7 @@ function posa(P, kA, kB, u) {
         const toeA = sA.toe || kA.toe, toeB = sB.toe || kB.toe;
         const tibia = ang(end[0] - mid[0], end[1] - mid[1]);
         const verso = vista === 'fronte' ? (i === 0 ? 1 : -1) : 1;
-        const calcola = toe => {
+        const calcola = (toe, sospeso) => {
           if (Array.isArray(toe)) {
             const tg = [toe[0] + dx, toe[1]];
             const d = dist(end, tg) || 1;
@@ -441,10 +496,11 @@ function posa(P, kA, kB, u) {
           if (vista === 'fronte') return add(end, dir(tibia + 90 * verso), L.ft * 0.7);
           if (toe === 'punta') return add(end, dir(tibia + 25), L.ft);
           if (toe === 'perp') return add(end, dir(tibia + 90), L.ft);
+          if (sospeso) return add(end, dir(tibia + 32), L.ft);
           return add(end, [0.98, 0.18], L.ft);
         };
-        const pA = calcola(toeA), pB = calcola(toeB);
-        J['f' + (i + 1)] = toeA === toeB ? pA : lerpP(pA, pB, u);
+        const pA = calcola(toeA, !sA.ik), pB = calcola(toeB, !sB.ik);
+        J['f' + (i + 1)] = toeA === toeB && !sA.ik === !sB.ik ? pA : lerpP(pA, pB, u);
       }
     }
   }
@@ -452,10 +508,118 @@ function posa(P, kA, kB, u) {
 }
 
 /* ---------- Disegno ---------- */
-const OSSA_DIETRO = [['hip', 'k2'], ['k2', 'a2'], ['a2', 'f2'], ['s2', 'e2'], ['e2', 'w2']];
-const OSSA_DAVANTI = [['hip', 'k1'], ['k1', 'a1'], ['a1', 'f1'], ['s1', 'e1'], ['e1', 'w1']];
 const fx = n => Math.round(n * 100) / 100;
+const pt = p => `${fx(p[0])} ${fx(p[1])}`;
 
+/* Muscoli. Ogni osso ha un nucleo e dei ventri muscolari sul lato anteriore (+1) o posteriore (-1).
+   u = posizione lungo l'osso (0 = articolazione di partenza, 1 = arrivo), t = spessore, p = dove sta il picco. */
+const GROSSO = 1.15;
+const SEGMENTI = {
+  coscia: { core: 1.5, m: [
+    { id: 'gluteo', lato: -1, u: [-0.2, 0.38], t: 2.1, p: 0.42 },
+    { id: 'quadricipite', lato: 1, u: [-0.02, 0.97], t: 2.0, p: 0.4 },
+    { id: 'femorali', lato: -1, u: [0.22, 0.95], t: 1.35, p: 0.4 }] },
+  tibia: { core: 0.88, m: [
+    { id: 'polpacci', lato: -1, u: [0.03, 0.66], t: 1.7, p: 0.3 },
+    { id: 'tibiale', lato: 1, u: [0.04, 0.74], t: 0.5, p: 0.3 }] },
+  braccio: { core: 0.98, m: [
+    { id: 'tricipite', lato: -1, u: [0.18, 0.92], t: 1.3, p: 0.4 },
+    { id: 'bicipite', lato: 1, u: [0.28, 0.93], t: 1.2, p: 0.56 },
+    { id: 'deltoide', lato: 1, u: [-0.2, 0.46], t: 1.3, p: 0.3 },
+    { id: 'deltoide', lato: -1, u: [-0.2, 0.46], t: 1.2, p: 0.3 }] },
+  avambraccio: { core: 0.74, m: [
+    { id: 'avambraccio', lato: 1, u: [-0.02, 0.74], t: 0.9, p: 0.25 },
+    { id: 'avambraccio', lato: -1, u: [-0.02, 0.68], t: 0.72, p: 0.25 }] },
+  busto: { core: 1.95, segno: -1, m: [
+    { id: 'lombari', lato: -1, u: [0.02, 0.5], t: 0.9, p: 0.5 },
+    { id: 'dorsali', lato: -1, u: [0.38, 0.96], t: 1.85, p: 0.64 },
+    { id: 'trapezio', lato: -1, u: [0.8, 1.14], t: 1.15, p: 0.42 },
+    { id: 'addominali', lato: 1, u: [0.06, 0.64], t: 1.05, p: 0.5, addome: true },
+    { id: 'pettorale', lato: 1, u: [0.58, 0.99], t: 2.05, p: 0.6 }] },
+};
+
+// Dal testo della libreria ("Gambe: quadricipite, gluteo…") ai muscoli da accendere
+const MAPPA_MUSCOLI = [[/quadricipit/, ['quadricipite']], [/glute/, ['gluteo']], [/femoral/, ['femorali']], [/polpacc|gastrocnem|soleo/, ['polpacci']],
+  [/tibial/, ['tibiale']], [/pettoral/, ['pettorale']], [/deltoid|cuffia/, ['deltoide']], [/bicipit|\bbrachiale\b/, ['bicipite']],
+  [/tricipit/, ['tricipite']], [/dorsal|grande rotondo/, ['dorsali']], [/trapezi|romboid/, ['trapezio']], [/erettor|lombar|quadrato dei lombi/, ['lombari']],
+  [/addom|obliqu|\bretto dell|\btrasverso/, ['addominali']], [/avambracc|brachioradial|flessori/, ['avambraccio']]];
+// Parole generiche (es. "Total body: gambe, petto, spalle"); "erettori della schiena" non conta come schiena
+const GENERICHE = [[/\bgambe\b/, ['quadricipite', 'gluteo', 'femorali', 'polpacci']], [/\bpetto\b/, ['pettorale']], [/\bspalle\b/, ['deltoide']],
+  [/\bbraccia\b/, ['bicipite', 'tricipite']], [/(?<!della )\bschiena\b/, ['dorsali', 'trapezio']], [/\baddome\b/, ['addominali']]];
+export function muscoliDa(testo) {
+  const t = String(testo || '').toLowerCase();
+  const parte = t.includes(':') ? t.split(':').slice(1).join(':') : t;
+  const out = new Set();
+  for (const [re, ids] of MAPPA_MUSCOLI) if (re.test(parte)) ids.forEach(i => out.add(i));
+  for (const [re, ids] of GENERICHE) if (re.test(parte)) ids.forEach(i => out.add(i));
+  return out;
+}
+const accesi = opz => opz.evidenzia instanceof Set ? opz.evidenzia : (opz.muscoli ? muscoliDa(opz.muscoli) : new Set());
+
+const gonfia = (mu, u, vf) => {
+  if (u <= mu.u[0] || u >= mu.u[1]) return 0;
+  const x = (u - mu.u[0]) / (mu.u[1] - mu.u[0]);
+  const y = Math.pow(x, Math.log(0.5) / Math.log(mu.p));
+  return (vf ? mu.t * 0.75 : mu.t) * GROSSO * Math.pow(Math.sin(Math.PI * y), 0.9);
+};
+// Profilo continuo del segmento: davanti e dietro = nucleo + ventri muscolari di quel lato
+function profilo(A, B, S, vf) {
+  const dx = B[0] - A[0], dy = B[1] - A[1], Lg = Math.hypot(dx, dy) || 1;
+  const d = [dx / Lg, dy / Lg], sg = S.segno || 1;
+  const n = [d[1] * sg, -d[0] * sg];                       // verso il lato anteriore
+  const muscoli = vf ? S.m.flatMap(m => m.lato === 1 ? [m, { ...m, lato: -1 }] : []) : S.m;
+  const u0 = Math.min(0, ...muscoli.map(m => m.u[0])), u1 = Math.max(1, ...muscoli.map(m => m.u[1]));
+  const W = (lato, u) => {
+    let max = 0, somma = 0;
+    for (const m of muscoli) if (m.lato === lato) { const g = gonfia(m, u, vf); somma += g; if (g > max) max = g; }
+    return S.core + max + 0.35 * (somma - max);
+  };
+  const punto = (u, lato, w) => [A[0] + d[0] * u * Lg + n[0] * w * lato, A[1] + d[1] * u * Lg + n[1] * w * lato];
+  return { u0, u1, W, punto, muscoli };
+}
+const percorso = pts => pts.map((q, k) => `${k ? 'L' : 'M'}${pt(q)}`).join(' ') + ' Z';
+
+function segmentoSVG(A, B, nome, cls, ev, vf) {
+  const S = SEGMENTI[nome];
+  const P = profilo(A, B, S, vf);
+  const N = 22, us = Array.from({ length: N + 1 }, (_, k) => P.u0 + (P.u1 - P.u0) * k / N);
+  const davanti = us.map(u => P.punto(u, 1, P.W(1, u)));
+  const dietro = us.map(u => P.punto(u, -1, P.W(-1, u))).reverse();
+  let out = `<line class="mcore ${cls}" x1="${fx(A[0])}" y1="${fx(A[1])}" x2="${fx(B[0])}" y2="${fx(B[1])}" stroke-width="${fx(S.core * 2)}"/>`
+    + `<path class="mpelle ${cls}" d="${percorso([...davanti, ...dietro])}"/>`;
+  for (const mu of P.muscoli) {                            // muscoli che lavorano, in oro
+    if (!ev.has(mu.id)) continue;
+    const zu = Array.from({ length: 15 }, (_, k) => mu.u[0] + (mu.u[1] - mu.u[0]) * k / 14);
+    const fuori = zu.map(u => P.punto(u, mu.lato, P.W(mu.lato, u) - 0.05));
+    const dentro = zu.map(u => P.punto(u, mu.lato, Math.max(0.15, S.core * 0.3 - gonfia(mu, u, vf) * 0.15))).reverse();
+    out += `<path class="mlavora ${cls}" d="${percorso([...fuori, ...dentro])}"/>`;
+  }
+  for (const mu of P.muscoli) {                            // solchi sottili tra un muscolo e l'altro
+    const a = mu.u[0] + (mu.u[1] - mu.u[0]) * 0.22, b = mu.u[0] + (mu.u[1] - mu.u[0]) * 0.8;
+    const linea = Array.from({ length: 9 }, (_, k) => P.punto(a + (b - a) * k / 8, mu.lato, S.core * 0.42 + gonfia(mu, a + (b - a) * k / 8, vf) * 0.08));
+    out += `<polyline class="msolco" points="${linea.map(pt).join(' ')}"/>`;
+    if (mu.addome) for (const f of [0.32, 0.5, 0.68]) {
+      const u = mu.u[0] + (mu.u[1] - mu.u[0]) * f;
+      const p1 = P.punto(u, 1, S.core * 0.5), p2 = P.punto(u, 1, P.W(1, u) - 0.25);
+      out += `<line class="msolco" x1="${fx(p1[0])}" y1="${fx(p1[1])}" x2="${fx(p2[0])}" y2="${fx(p2[1])}"/>`;
+    }
+  }
+  return out;
+}
+
+function arto(J, i, cls, ev, vf) {
+  const r = J['r' + i], k = J['k' + i], a = J['a' + i], f = J['f' + i];
+  const s = J['s' + i], e = J['e' + i], w = J['w' + i];
+  return {
+    gamba: segmentoSVG(r, k, 'coscia', cls, ev, vf) + segmentoSVG(k, a, 'tibia', cls, ev, vf)
+      + `<line class="mcore ${cls}" x1="${fx(a[0])}" y1="${fx(a[1])}" x2="${fx(f[0])}" y2="${fx(f[1])}" stroke-width="1.8"/>`,
+    braccio: segmentoSVG(s, e, 'braccio', cls, ev, vf) + segmentoSVG(e, w, 'avambraccio', cls, ev, vf)
+      + `<circle class="${ev.has('deltoide') ? 'mlavora' : 'mpelle'} ${cls}" cx="${fx(s[0])}" cy="${fx(s[1])}" r="2"/>`
+      + `<circle class="mpelle ${cls}" cx="${fx(w[0])}" cy="${fx(w[1])}" r="1.05"/>`
+  };
+}
+
+/* Attrezzi che si muovono con il corpo */
 function propSVG(pr, J) {
   const at = k => {
     const base = typeof k === 'string' ? (J[k] || J.hip) : k;
@@ -473,9 +637,17 @@ function propSVG(pr, J) {
     case 'maniglia': { const c = at(pr.at); return `<line class="eq" x1="${fx(c[0] - 2)}" x2="${fx(c[0] + 2)}" y1="${fx(c[1])}" y2="${fx(c[1])}"/>`; }
     case 'cavo': { const c = at(pr.at); const to = pr.to; return `<line class="cv" x1="${fx(c[0])}" y1="${fx(c[1])}" x2="${to[0]}" y2="${to[1]}"/><circle class="eqf" cx="${to[0]}" cy="${to[1]}" r="1.4"/>`; }
     case 'piatto': { const c = J.a1; const v = dir(pr.ang + 90); return `<line class="eqs" x1="${fx(c[0] - v[0] * 6 + 1.2)}" y1="${fx(c[1] - v[1] * 6 + 1.2)}" x2="${fx(c[0] + v[0] * 6 + 1.2)}" y2="${fx(c[1] + v[1] * 6 + 1.2)}"/>`; }
+    case 'anelli': {
+      // Anello da ginnastica (circa 23 cm, spessore 28 mm) impugnato nella parte bassa, appeso con una cinghia
+      const w = at(pr.at), r = 2.6, c = [w[0], w[1] - r + 0.55];
+      const ancora = [pr.ax ?? c[0], pr.ay ?? -30];
+      const cl = pr.at === 'w2' ? ' dietro' : '';
+      return `<line class="cinghia${cl}" x1="${fx(c[0])}" y1="${fx(c[1] - r)}" x2="${fx(ancora[0])}" y2="${fx(ancora[1])}"/><circle class="anello${cl}" cx="${fx(c[0])}" cy="${fx(c[1])}" r="${r}"/>`;
+    }
     default: return '';
   }
 }
+/* Attrezzi fermi */
 function scenaSVG(P) {
   const out = [];
   for (const pr of P.props || []) {
@@ -486,24 +658,32 @@ function scenaSVG(P) {
     if (pr.p === 'sbarra') out.push(pr.basso
       ? `<line class="eq" x1="${pr.x}" x2="${pr.x}" y1="${pr.y}" y2="${G}"/><circle class="eqf" cx="${pr.x}" cy="${pr.y}" r="1.5"/>`
       : `<line class="eq" x1="${pr.x}" x2="${pr.x}" y1="${pr.y}" y2="-8"/><circle class="eqf" cx="${pr.x}" cy="${pr.y}" r="1.5"/>`);
-    if (pr.p === 'parallele') out.push(`<line class="eq" x1="${pr.x}" x2="${pr.x}" y1="${pr.y}" y2="${G}"/><circle class="eqf" cx="${pr.x}" cy="${pr.y}" r="1.5"/>`);
+    if (pr.p === 'parallele') {
+      // Due staggi lunghi sorretti da montanti: di lato quello lontano si vede appena dietro quello vicino
+      const { x1, x2, y } = pr, m1 = x1 + 2, m2 = x2 - 2, d = -1.1;
+      const base = x => `<line class="eq" x1="${fx(x - 2.6)}" x2="${fx(x + 2.6)}" y1="${G}" y2="${G}"/>`;
+      out.push(`<g class="lontano"><line class="staggio" x1="${fx(x1 + d)}" x2="${fx(x2 + d)}" y1="${fx(y - 0.7)}" y2="${fx(y - 0.7)}"/>`
+        + `<line class="eq" x1="${fx(m1 + d)}" x2="${fx(m1 + d)}" y1="${fx(y - 0.7)}" y2="${G}"/><line class="eq" x1="${fx(m2 + d)}" x2="${fx(m2 + d)}" y1="${fx(y - 0.7)}" y2="${G}"/></g>`
+        + `<line class="staggio" x1="${x1}" x2="${x2}" y1="${y}" y2="${y}"/>`
+        + `<line class="eq" x1="${m1}" x2="${m1}" y1="${y}" y2="${G}"/><line class="eq" x1="${m2}" x2="${m2}" y1="${y}" y2="${G}"/>${base(m1)}${base(m2)}`);
+    }
   }
   return out.join('');
 }
-const SCENA_DINAMICA = new Set(['bil', 'man', 'peso', 'palla', 'kb', 'ruota', 'rullo', 'maniglia', 'cavo', 'piatto']);
+const SCENA_DINAMICA = new Set(['bil', 'man', 'peso', 'palla', 'kb', 'ruota', 'rullo', 'maniglia', 'cavo', 'piatto', 'anelli']);
 
-function corpoSVG(P, J) {
-  const line = (a, b, cls) => `<line class="${cls}" x1="${fx(J[a][0])}" y1="${fx(J[a][1])}" x2="${fx(J[b][0])}" y2="${fx(J[b][1])}"/>`;
-  const dietro = J.vista === 'fronte' ? 'fr' : 'bk';
+function corpoSVG(P, J, ev = new Set()) {
+  const vf = J.vista === 'fronte';
   const props = (P.props || []).filter(p => SCENA_DINAMICA.has(p.p));
   const dietroProps = props.filter(p => p.at === 'w2').map(p => propSVG(p, J)).join('');
   const davantiProps = props.filter(p => p.at !== 'w2').map(p => propSVG(p, J)).join('');
-  return dietroProps
-    + OSSA_DIETRO.map(([a, b]) => line(a, b, dietro)).join('')
-    + line('hip', 'neck', 'fr')
+  const dietro = arto(J, 2, vf ? 'm1' : 'm2', ev, vf), davanti = arto(J, 1, 'm1', ev, vf);
+  const collo = lerpP(J.neck, J.head, 0.55);
+  return dietroProps + dietro.gamba + dietro.braccio
+    + segmentoSVG(J.hip, J.neck, 'busto', 'm1', ev, vf)
+    + `<line class="mcore m1" x1="${fx(J.neck[0])}" y1="${fx(J.neck[1])}" x2="${fx(collo[0])}" y2="${fx(collo[1])}" stroke-width="2.9"/>`
     + `<circle class="hd" cx="${fx(J.head[0])}" cy="${fx(J.head[1])}" r="${L.hr}"/>`
-    + OSSA_DAVANTI.map(([a, b]) => line(a, b, 'fr')).join('')
-    + davantiProps;
+    + davanti.gamba + davanti.braccio + davantiProps;
 }
 
 function trasformazione(P) {
@@ -561,10 +741,10 @@ function frame(P, s, opz) {
   return posa(P, P.keys[a], P.keys[b], u);
 }
 
-function svgCompleto(P, J, cls) {
+function svgCompleto(P, J, cls, ev) {
   const g = P.g === undefined ? G : P.g;
   const suolo = g === null ? '' : `<line class="gr" x1="2" x2="58" y1="${g}" y2="${g}"/>`;
-  return `<svg class="${cls}" viewBox="0 0 60 60" aria-hidden="true"><g${trasformazione(P)}>${suolo}${scenaSVG(P)}<g class="corpo">${corpoSVG(P, J)}</g></g></svg>`;
+  return `<svg class="${cls}" viewBox="0 0 60 60" aria-hidden="true"><g${trasformazione(P)}>${suolo}${scenaSVG(P)}<g class="corpo">${corpoSVG(P, J, ev)}</g></g></svg>`;
 }
 
 // Omino fermo nella posa più rappresentativa (fine della prima fase)
@@ -572,7 +752,7 @@ export function ominoSVG(anim, opz = {}) {
   const P = POSE[animazione(anim)];
   const k = P.keys[P.tenuta ?? Math.min(1, P.keys.length - 1)];
   const J = posa(P, k, k, 0);
-  return svgCompleto(P, J, opz.cls || 'omino');
+  return svgCompleto(P, J, opz.cls || 'omino', accesi(opz));
 }
 
 const vivi = new Set();
@@ -581,28 +761,30 @@ function loop(ts) {
   for (const v of vivi) {
     if (!v.el.isConnected) { vivi.delete(v); continue; }
     const s = (ts - v.t0) / 1000;
-    v.g.innerHTML = corpoSVG(v.P, frame(v.P, s, v.opz));
+    v.g.innerHTML = corpoSVG(v.P, frame(v.P, s, v.opz), v.ev);
   }
   if (vivi.size) requestAnimationFrame(loop); else loopAttivo = false;
 }
 
-// Monta un omino animato dentro el. opz: { tempo:'3-1-1-0', inizia:'ecc'|'conc', tenuta:bool }
+// Monta un omino animato dentro el.
+// opz: { tempo:'3-1-1-0', inizia:'ecc'|'conc', tenuta:bool, muscoli:'testo della libreria' }
 export function montaOmino(el, anim, opz = {}) {
   const P = POSE[animazione(anim)];
   if (!el) return;
   for (const v of vivi) if (v.el === el) vivi.delete(v);
+  const ev = accesi(opz);
   const J0 = frame(P, 0, opz);
-  el.innerHTML = svgCompleto(P, J0, 'omino grande');
-  if (reduceMotion && !opz.forza) { el.innerHTML = ominoSVG(anim, { cls: 'omino grande' }); return; }
+  el.innerHTML = svgCompleto(P, J0, 'omino grande', ev);
+  if (reduceMotion && !opz.forza) { el.innerHTML = ominoSVG(anim, { ...opz, cls: 'omino grande' }); return; }
   const g = el.querySelector('g.corpo');
-  vivi.add({ el, g, P, opz, t0: performance.now() });
+  vivi.add({ el, g, P, opz, ev, t0: performance.now() });
   if (!loopAttivo) { loopAttivo = true; requestAnimationFrame(loop); }
 }
 
 // Per i controlli: svg di una fase precisa (u da 0 a 1 lungo il ciclo)
 export function ominoFase(anim, s, opz = {}) {
   const P = POSE[animazione(anim)];
-  return svgCompleto(P, frame(P, s, opz), 'omino');
+  return svgCompleto(P, frame(P, s, opz), 'omino', accesi(opz));
 }
 export const durataCiclo = (anim, opz = {}) => {
   const P = POSE[animazione(anim)];

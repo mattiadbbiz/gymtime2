@@ -92,7 +92,7 @@ button:disabled{opacity:.45;cursor:default}
 .tile-title{display:block;font-family:"Barlow Condensed",sans-serif;font-size:40px;font-weight:700;line-height:1}
 .tile-sub{display:block;margin-top:6px;font-size:15px;color:var(--ink-2)}
 .tile.main{min-height:190px;background:var(--primary);border-color:var(--primary);color:var(--primary-ink);
-  --fig:#FFFFFF;--fig-2:rgba(255,255,255,.45);--line:rgba(255,255,255,.28);box-shadow:inset 0 0 0 1px rgba(201,162,75,.35)}
+  --fig:#FFFFFF;--fig-2:rgba(255,255,255,.45);--sep:#6A1121;--line:rgba(255,255,255,.28);box-shadow:inset 0 0 0 1px rgba(201,162,75,.35)}
 .tile.main .tile-fig{width:120px;height:140px;background:rgba(0,0,0,.18);border:1px solid rgba(214,178,94,.45)}
 .tile.main{grid-template-columns:120px 1fr}
 .tile.main .tile-title{font-size:52px}
@@ -178,8 +178,12 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 /* Omino */
 svg.omino{overflow:hidden}
 svg line{stroke-linecap:round}
-svg .fr,svg .bk{stroke-width:2.4}
-svg .fr{stroke:var(--fig)} svg .bk{stroke:var(--fig-2)} svg .hd{fill:var(--fig)}
+svg .hd{fill:var(--fig)}
+/* corpo muscoloso: m1 = lato vicino, m2 = arti dietro; solchi nel colore dello sfondo; muscoli che lavorano in oro */
+svg .mcore.m1{stroke:var(--fig)} svg .mcore.m2{stroke:var(--fig-2)}
+svg .mpelle.m1{fill:var(--fig)} svg .mpelle.m2{fill:var(--fig-2)}
+svg .mlavora{fill:var(--gold)} svg .mlavora.m2{fill:var(--gold-2);opacity:.85}
+svg .msolco{fill:none;stroke:var(--sep,var(--surface));stroke-width:.22;stroke-opacity:.55;stroke-linecap:round;stroke-linejoin:round}
 svg .gr{stroke:var(--line);stroke-width:1.4}
 svg .ld{fill:var(--gold);stroke:var(--fig);stroke-width:.7}
 svg .ldin{fill:var(--fig)}
@@ -188,7 +192,13 @@ svg .eqs{stroke:var(--ink-2);stroke-width:2.2}
 svg .eqf{fill:var(--ink-2)}
 svg .cv{stroke:var(--ink-2);stroke-width:.6;stroke-dasharray:1.2 1}
 svg .box{fill:none;stroke:var(--ink-2);stroke-width:1.2}
-.tile.main svg .eq,.tile.main svg .eqs{stroke:rgba(255,255,255,.6)}
+svg .staggio{stroke:var(--ink-2);stroke-width:1.6}
+svg .lontano{opacity:.45}
+svg .anello{fill:none;stroke:var(--ink-2);stroke-width:.8}
+svg .cinghia{stroke:var(--ink-2);stroke-width:.65}
+svg .anello.dietro,svg .cinghia.dietro{opacity:.5}
+.tile.main svg .eq,.tile.main svg .eqs,.tile.main svg .staggio,.tile.main svg .anello,.tile.main svg .cinghia{stroke:rgba(255,255,255,.6)}
+.tile.main svg .ld{stroke:#3A0A13} .tile.main svg .ldin{fill:#3A0A13}
 
 @media (prefers-reduced-motion: reduce){ .toast{transition:none} .attesa::before{animation:none} }
 @media (max-width:380px){

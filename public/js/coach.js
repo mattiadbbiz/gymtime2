@@ -688,8 +688,8 @@ function schedaEsercizio(x) {
     <div class="azioni">${modificabile(x) ? '<button type="button" class="btn" data-modifica>Modifica</button>' : ''}<button type="button" class="btn primary" data-chiudi>Chiudi</button></div></div>`);
   v.querySelector('.dialogo').classList.add('grande');
   const stage = v.querySelector('#lib-stage');
-  montaOmino(stage, x.animazione, { forza: true });
-  v.querySelector('#lib-tempo').oninput = e => montaOmino(stage, x.animazione, { tempo: e.target.value, forza: true });
+  montaOmino(stage, x.animazione, { forza: true, muscoli: x.muscolo });
+  v.querySelector('#lib-tempo').oninput = e => montaOmino(stage, x.animazione, { tempo: e.target.value, forza: true, muscoli: x.muscolo });
   v.querySelector('[data-chiudi]').onclick = () => v.remove();
   v.querySelector('[data-modifica]')?.addEventListener('click', () => { v.remove(); formEsercizio(x); });
 }
@@ -715,8 +715,10 @@ function formEsercizio(x) {
     </form>`);
   v.querySelector('.dialogo').classList.add('grande');
   const f = v.querySelector('form'), stage = v.querySelector('#form-stage');
-  montaOmino(stage, f.animazione.value, { forza: true });
-  f.animazione.onchange = () => montaOmino(stage, f.animazione.value, { forza: true });
+  const prova = () => montaOmino(stage, f.animazione.value, { forza: true, muscoli: f.muscolo.value });
+  prova();
+  f.animazione.onchange = prova;
+  f.muscolo.addEventListener('change', prova);
   v.querySelector('[data-chiudi]')?.addEventListener('click', () => v.remove());
   v.querySelector('[data-elimina]')?.addEventListener('click', async () => {
     if (!await chiedi({ titolo: `Eliminare ${x.nome}?`, testo: 'Le schede che lo usano tengono nome e numeri.', ok: 'Elimina', pericolo: true })) return;

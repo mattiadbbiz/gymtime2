@@ -218,7 +218,7 @@ function schermataEsercizio() {
       <button class="btn ghost" type="button" id="nonfatto">Non l’ho fatto</button>
       <button class="btn primary grow" type="button" id="fatto">Fatto ›</button>` });
   etichettaHome();
-  montaOmino(document.getElementById('stage'), e.animazione, { tempo: t, tenuta: e.modalita === 'tempo' });
+  montaOmino(document.getElementById('stage'), e.animazione, { tempo: t, tenuta: e.modalita === 'tempo', muscoli: e.muscolo });
   montaTimer(document.getElementById('timer'), e);
 
   const blocca = v => app.querySelectorAll('.bottombar button').forEach(b => { b.disabled = v || (b.id === 'indietro' && i === 0); });
