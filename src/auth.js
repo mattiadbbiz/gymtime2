@@ -1,4 +1,5 @@
 // GymTime · password cifrate (PBKDF2) e sessioni con cookie
+// Formato compatibile con le password già salvate: pbkdf2$iterazioni$salt$hash
 const ITERAZIONI = 100000;
 const COOKIE = 'gt_sess';
 const DURATA_GIORNI = 30;
@@ -45,14 +46,27 @@ export async function creaSessione(env, utenteId) {
 
 export const cookieScaduto = `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
 
+const tokenDa = request => (request.headers.get('Cookie') || '').match(/(?:^|;\s*)gt_sess=([^;]+)/)?.[1];
+
 export async function utenteDaRichiesta(request, env) {
-  const m = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)gt_sess=([^;]+)/);
-  if (!m) return null;
-  const tokenHash = await sha256(m[1]);
+  const token = tokenDa(request);
+  if (!token) return null;
   const u = await env.DB.prepare(
     `SELECT u.id, u.nome, u.username, u.ruolo, u.coach_id, u.cambio_password
        FROM sessioni_login s JOIN utenti u ON u.id = s.utente_id
       WHERE s.token_hash = ? AND s.scade_il > ? AND u.attivo = 1`
-  ).bind(tokenHash, adesso()).first();
-  return u ? { ...u, tokenHash } : null;
+  ).bind(await sha256(token), adesso()).first();
+  return u || null;
+}
+
+export async function chiudiSessione(request, env) {
+  const token = tokenDa(request);
+  if (token) await env.DB.prepare('DELETE FROM sessioni_login WHERE token_hash = ?').bind(await sha256(token)).run();
+}
+
+// Dopo un cambio password chiude le altre sessioni dello stesso utente
+export async function chiudiAltreSessioni(request, env, utenteId) {
+  const token = tokenDa(request);
+  const mia = token ? await sha256(token) : '';
+  await env.DB.prepare('DELETE FROM sessioni_login WHERE utente_id = ? AND token_hash <> ?').bind(utenteId, mia).run();
 }

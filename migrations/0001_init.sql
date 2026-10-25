@@ -1,5 +1,4 @@
--- GymTime · schema iniziale (già applicato su D1 "gymtime"; IF NOT EXISTS lo rende ripetibile)
-
+-- GymTime · schema iniziale (già applicato al database gymtime)
 CREATE TABLE IF NOT EXISTS utenti (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nome TEXT NOT NULL,

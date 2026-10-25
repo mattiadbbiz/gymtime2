@@ -1,10 +1,14 @@
 {
   "name": "gymtime",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "db:migra": "wrangler d1 migrations apply gymtime --remote"
+    "migrazioni": "wrangler d1 migrations apply gymtime --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
   }
 }
