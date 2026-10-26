@@ -1,8 +1,10 @@
-// GymTime · schermate dell'atleta: Allena e Storico
+// GymTime · schermate dell'atleta: Allena e Storico (giornate, progressi, schede)
 import { api, esc, dataCorta, dataLunga, dataMese } from './api.js';
 import { stato, app, rotta, pagina, attesa, toast, chiedi, finestra } from './ui.js';
 import { montaOmino, ominoSVG } from './omino.js';
 import { rxTesto, tempoTesto, CAMPI_FATTI, etichetta, durata } from './regole.js';
+import { htmlSchede, apriScheda } from './storico-schede.js';
+import { FASI, nomeArea, doseTesto } from './mobilita.js';
 
 const PENNA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
 const FRECCIA_SX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
@@ -439,24 +441,26 @@ function costanza(completate, oggi) {
   return { serie, ultime };
 }
 
-function calendario(giornate, mese, oggi) {
+function calendario(giornate, mese, oggi, mobilita = []) {
   const [y, m] = mese.split('-').map(Number);
+  const mob = new Map(); for (const s of mobilita) if (!mob.has(s.data)) mob.set(s.data, s);
   const primo = new Date(Date.UTC(y, m - 1, 1)), giorniMese = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const vuoti = (primo.getUTCDay() + 6) % 7;
   const per = new Map(giornate.map(g => [g.data, g]));
   let celle = '';
   for (let i = 0; i < vuoti; i++) celle += '<span class="c-vuota"></span>';
   for (let d = 1; d <= giorniMese; d++) {
-    const iso = `${mese}-${String(d).padStart(2, '0')}`, g = per.get(iso);
-    const cls = [g ? (g.stato === 'completata' ? 'si' : 'corso') : '', iso === oggi ? 'oggi' : ''].join(' ').trim();
-    celle += g ? `<button type="button" class="c-giorno ${cls}" data-g="${g.id}" aria-label="${dataLunga(iso)}: ${esc(g.nome_giorno || 'allenamento')}">${d}</button>`
+    const iso = `${mese}-${String(d).padStart(2, '0')}`, g = per.get(iso), mo = mob.get(iso);
+    const cls = [g ? (g.stato === 'completata' ? 'si' : 'corso') : '', mo ? 'mob' : '', iso === oggi ? 'oggi' : ''].join(' ').trim();
+    celle += g ? `<button type="button" class="c-giorno ${cls}" data-g="${g.id}" aria-label="${dataLunga(iso)}: ${esc(g.nome_giorno || 'allenamento')}${mo ? ' e mobilità' : ''}">${d}</button>`
+      : mo ? `<button type="button" class="c-giorno ${cls}" data-m="${mo.id}" aria-label="${dataLunga(iso)}: mobilità e stretching">${d}</button>`
       : `<span class="c-giorno ${cls}">${d}</span>`;
   }
   return `<div class="cal"><div class="cal-testa"><button type="button" class="btn ghost sm" data-mese="-1" aria-label="Mese precedente">‹</button>
     <b>${dataMese(mese + '-01')}</b><button type="button" class="btn ghost sm" data-mese="1" aria-label="Mese successivo" ${mese >= oggi.slice(0, 7) ? 'disabled' : ''}>›</button></div>
     <div class="cal-sett">${['L', 'M', 'M', 'G', 'V', 'S', 'D'].map(x => `<span>${x}</span>`).join('')}</div>
     <div class="cal-griglia">${celle}</div>
-    <div class="cal-legenda"><span><i class="si"></i>Allenato</span><span><i class="corso"></i>In corso</span></div></div>`;
+    <div class="cal-legenda"><span><i class="si"></i>Allenato</span><span><i class="corso"></i>In corso</span>${mobilita.length ? '<span><i class="mob"></i>Mobilità</span>' : ''}</div></div>`;
 }
 
 const fattoTesto = (e, sv) => {
@@ -487,6 +491,25 @@ function cartaGiornata(g, puoEliminare) {
         <div class="small">${fattoTesto(e, sv)}</div></li>`; }).join('')}</ol>
       ${sensazioniHTML(g.sensazioni.post, 'Dopo')}
       ${puoEliminare ? `<button type="button" class="link danger" data-elimina="${g.id}">Elimina giornata e sbloccala</button>` : ''}
+    </div></details>`;
+}
+
+// Sessione di mobilità nello storico: fatti, durata e area; il coach può eliminarla
+const esitoMob = v => v === 'fatto' ? '<span class="ok">Fatto</span>' : v === 'non_fatto' ? '<span class="danger-t">Non fatto</span>' : '<span class="muted">Non registrato</span>';
+function cartaMobilita(s, { puoEliminare, mio, oggi }) {
+  const es = s.piano.esercizi || [];
+  const fatti = es.filter(e => s.esiti[e.rif] === 'fatto').length;
+  const aperta = s.stato !== 'completata';
+  const oggiAperta = aperta && mio && s.data === oggi;
+  return `<details class="giornata mob" id="m-${s.id}">
+    <summary><div><b>${dataLunga(s.data)}</b><span class="muted small">Mobilità e stretching · ${s.durata_scelta} min · ${esc(nomeArea(s.zona))}</span></div>
+      <div class="g-chips">${!aperta ? `<span class="tag">${fatti}/${es.length}</span><span class="tag gold">Mobilità</span>` : oggiAperta ? '<span class="tag bordeaux">In corso</span>' : '<span class="tag">Non conclusa</span>'}</div></summary>
+    <div class="g-corpo">
+      <ol class="g-esercizi">${es.map(e => `<li><div class="ge-testa"><b>${esc(e.nome)}</b></div>
+        <div class="small"><span class="muted">${esc(FASI[e.fase] || '')}${e.fase ? ' · ' : ''}${esc(doseTesto(e))}</span></div>
+        <div class="small">${esitoMob(s.esiti[e.rif])}</div></li>`).join('')}</ol>
+      ${oggiAperta ? `<a class="btn primary" href="#/mobilita/s/${s.id}" style="margin-top:8px">Riprendi</a>` : ''}
+      ${puoEliminare || (mio && aperta) ? `<button type="button" class="link danger" data-elimina-mob="${s.id}">Elimina sessione</button>` : ''}
     </div></details>`;
 }
 
@@ -533,6 +556,11 @@ export async function vistaStorico(atletaId, opz = {}) {
   const d = await api(`/api/storico/${atletaId}`);
   const oggi = d.oggi;
   if (vista.atleta !== atletaId) Object.assign(vista, { mese: oggi.slice(0, 7), atleta: atletaId, scheda: 'giornate', esercizio: null });
+  const scorri = !!opz.tab;
+  if (opz.tab) { vista.scheda = opz.tab; opz = { ...opz, tab: null }; }
+  const schede = d.schede || [];
+  const mobilita = d.mobilita || [];
+  const mobFatte = mobilita.filter(s => s.stato === 'completata').length;
   const completate = d.giornate.filter(g => g.stato === 'completata');
   const puoEliminare = io.ruolo !== 'atleta';
   const disegna = () => {
@@ -543,8 +571,14 @@ export async function vistaStorico(atletaId, opz = {}) {
     if (!vista.esercizio || !nomi.includes(vista.esercizio)) vista.esercizio = nomi[0] || null;
     const maxSett = Math.max(1, ...ultime.map(u => u.n));
     let contenuto;
-    if (vista.scheda === 'giornate') {
-      contenuto = d.giornate.length ? d.giornate.map(g => cartaGiornata(g, puoEliminare)).join('')
+    if (vista.scheda === 'schede') {
+      contenuto = htmlSchede(schede, { atletaId, gestisce: puoEliminare, mio });
+    } else if (vista.scheda === 'giornate') {
+      // Allenamenti e sessioni di mobilità insieme, dalla data più recente
+      const voci = [...d.giornate.map(g => ({ data: g.data, ord: 1, html: () => cartaGiornata(g, puoEliminare) })),
+        ...mobilita.map(m => ({ data: m.data, ord: 0, html: () => cartaMobilita(m, { puoEliminare, mio, oggi }) }))]
+        .sort((a, b) => b.data.localeCompare(a.data) || b.ord - a.ord);
+      contenuto = voci.length ? voci.map(v => v.html()).join('')
         : `<div class="empty">${mio ? 'Qui troverai i tuoi allenamenti salvati.' : 'Nessun allenamento salvato.'}</div>`;
     } else {
       const { punti, metrica } = vista.esercizio ? serieEsercizio(completate, vista.esercizio) : { punti: [], metrica: null };
@@ -563,10 +597,11 @@ export async function vistaStorico(atletaId, opz = {}) {
         <div><b>${tuttiVoti.length ? virgola(media(tuttiVoti)) : '–'}</b><span>voto medio</span></div>
       </div>
       <div class="costanza" aria-label="Allenamenti nelle ultime 12 settimane">${ultime.map(u => `<span title="Settimana del ${dataCorta(u.s)}: ${u.n}" style="--h:${u.n ? Math.max(18, u.n / maxSett * 100) : 8}%" class="${u.n ? 'si' : ''}"></span>`).join('')}</div>
-      <p class="small muted cost-et">Ultime 12 settimane · ${completate.length} ${completate.length === 1 ? 'allenamento' : 'allenamenti'} in totale</p>
-      ${calendario(d.giornate, vista.mese, oggi)}
+      <p class="small muted cost-et">Ultime 12 settimane · ${completate.length} ${completate.length === 1 ? 'allenamento' : 'allenamenti'} in totale${mobFatte ? ` · ${mobFatte} ${mobFatte === 1 ? 'sessione' : 'sessioni'} di mobilità` : ''}</p>
+      ${calendario(d.giornate, vista.mese, oggi, mobilita)}
       <div class="seg" role="tablist"><button type="button" data-s="giornate" aria-current="${vista.scheda === 'giornate'}">Giornate</button>
-        <button type="button" data-s="progressi" aria-current="${vista.scheda === 'progressi'}">Progressi</button></div>
+        <button type="button" data-s="progressi" aria-current="${vista.scheda === 'progressi'}">Progressi</button>
+        <button type="button" data-s="schede" aria-current="${vista.scheda === 'schede'}">Schede</button></div>
       <div id="contenuto">${contenuto}</div>` });
     app.onclick = async ev => {
       const t = ev.target;
@@ -574,6 +609,22 @@ export async function vistaStorico(atletaId, opz = {}) {
       if (mese) { const [y, m] = vista.mese.split('-').map(Number); vista.mese = new Date(Date.UTC(y, m - 1 + Number(mese.dataset.mese), 1)).toISOString().slice(0, 7); return disegna(); }
       const s = t.closest('[data-s]');
       if (s) { vista.scheda = s.dataset.s; return disegna(); }
+      const sc = t.closest('[data-scheda]');
+      if (sc) return apriScheda(schede.find(x => x.id === Number(sc.dataset.scheda)), { atletaId, gestisce: puoEliminare, ricarica: () => vistaStorico(atletaId, opz) });
+      const sm = t.closest('[data-m]');
+      if (sm) {
+        if (vista.scheda !== 'giornate') { vista.scheda = 'giornate'; disegna(); }
+        const det = document.getElementById('m-' + sm.dataset.m);
+        if (det) { det.open = true; det.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        return;
+      }
+      const em = t.closest('[data-elimina-mob]');
+      if (em) {
+        if (!await chiedi({ titolo: 'Eliminare questa sessione di mobilità?', testo: 'Sparisce dallo storico.', ok: 'Elimina', pericolo: true })) return;
+        try { await api(`/api/mobilita/sessioni/${em.dataset.eliminaMob}`, { metodo: 'DELETE' }); toast('Sessione eliminata'); vistaStorico(atletaId, opz); }
+        catch (e) { toast(e.message); }
+        return;
+      }
       const giorno = t.closest('[data-g]');
       if (giorno) {
         if (vista.scheda !== 'giornate') { vista.scheda = 'giornate'; disegna(); }
@@ -592,7 +643,11 @@ export async function vistaStorico(atletaId, opz = {}) {
     app.onchange = ev => { if (ev.target.id === 'sel-es') { vista.esercizio = ev.target.value; disegna(); } };
   };
   disegna();
+  // Aperto direttamente sulle schede (dopo un salvataggio): porta in vista l'elenco
+  if (scorri) document.querySelector('.seg')?.scrollIntoView({ block: 'start' });
 }
 
 rotta(/^\/storico$/, () => vistaStorico(stato.io.id));
+rotta(/^\/storico\/schede$/, () => vistaStorico(stato.io.id, { tab: 'schede' }));
 rotta(/^\/storico\/(\d+)$/, id => vistaStorico(Number(id)));
+rotta(/^\/storico\/(\d+)\/schede$/, id => vistaStorico(Number(id), { tab: 'schede' }));

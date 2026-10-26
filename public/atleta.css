@@ -148,3 +148,36 @@
 @media (min-width:700px){
   .esercizio{grid-template-columns:300px 1fr;gap:22px}
 }
+
+/* Mobilità e stretching: scelte, anteprima, svolgimento */
+.scelta-et{margin-top:18px}
+.bastone{margin-top:18px}
+.riprendi{border-left:4px solid var(--gold)}
+.riprendi .azioni-riga{margin-top:10px}
+.mob-ultime{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.mob-ultime li{display:flex;justify-content:space-between;gap:10px;font-size:15px;padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.mob-stima{display:grid;justify-items:center;text-align:center;gap:2px;padding:14px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:18px}
+.mob-stima b{font-family:"Barlow Condensed",sans-serif;font-size:56px;line-height:1;font-variant-numeric:tabular-nums}
+.fase-et{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:20px 0 0}
+.mob-lista{margin-top:10px}
+.mob-lista .anteprima-es{padding:10px;gap:8px}
+.mob-vedi{flex:1;min-width:0;display:flex;gap:12px;align-items:center;background:none;border:0;padding:0;text-align:left;color:inherit;font:inherit}
+.mob-vedi>span:last-child{display:grid;gap:3px;min-width:0}
+.mob-vedi b{font-family:"Barlow Condensed",sans-serif;font-size:20px;line-height:1.05}
+.mob-vedi .rx{justify-self:start}
+.cambia{flex:none;gap:4px;padding:0 10px}
+.cambia svg,#rigenera svg{width:18px;height:18px}
+.anteprima-es.appena{animation:appena 1.2s ease-out}
+@keyframes appena{from{box-shadow:0 0 0 3px var(--gold)}to{box-shadow:0 0 0 0 transparent}}
+.mob-dose{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.btn.pulsa{animation:pulsa 1.1s ease-in-out infinite}
+@keyframes pulsa{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--gold) 70%,transparent)}50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 0%,transparent)}}
+@media (prefers-reduced-motion: reduce){ .btn.pulsa,.anteprima-es.appena{animation:none} .btn.pulsa{box-shadow:0 0 0 3px var(--gold)} }
+.mob-esiti{margin-top:12px}
+/* Storico: giorni e sessioni di mobilità */
+.c-giorno.mob:not(.si):not(.corso){background:color-mix(in srgb,var(--gold) 30%,transparent);font-weight:700}
+.c-giorno.si.mob{box-shadow:inset 0 -3px 0 var(--gold),0 0 0 2px var(--gold)}
+.cal-legenda i.mob{background:color-mix(in srgb,var(--gold) 30%,transparent);box-shadow:inset 0 0 0 1.5px var(--gold)}
+.giornata.mob{border-left:4px solid var(--gold)}
+/* Home: tasto Mobilità a tutta larghezza per coach e admin */
+.tile.compact.riga{grid-template-columns:56px 1fr;align-items:center;gap:14px}

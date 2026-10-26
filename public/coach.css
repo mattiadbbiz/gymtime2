@@ -112,3 +112,42 @@ input[type="search"]{margin-bottom:4px}
 
 @media (prefers-reduced-motion: reduce){ .btn-mic.rec{animation:none} }
 @media (max-width:380px){ .campi{grid-template-columns:1fr 1fr} .giorno-testa{flex-wrap:wrap} }
+
+/* Storico delle schede */
+.aggiungi-scheda{width:100%;margin-bottom:10px;gap:8px}
+.lista-schede{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.carta-scheda{width:100%;text-align:left;display:grid;gap:4px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:14px 16px;font:inherit}
+.carta-scheda:active{background:var(--surface-2)}
+.cs-testa{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.cs-testa b{font-family:"Barlow Condensed",sans-serif;font-size:21px;line-height:1.1}
+.cs-nota{color:var(--ink-2);font-style:italic}
+.cs-dettaglio .tag{margin-right:4px}
+.cs-dettaglio .menu{margin-top:12px}
+.periodo{border:0;padding:0;margin:0;min-width:0}
+.periodo legend{padding:0}
+.periodo-in{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:6px}
+.periodo select{min-width:0;padding-left:8px;padding-right:2px;font-size:15px}
+.periodi{align-items:start}
+@media (max-width:560px){ .periodi{grid-template-columns:1fr} }
+
+/* Foto della scheda */
+.foto-tasti{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.foto-tasti label{position:relative;flex-direction:row;justify-content:center;gap:6px;padding:0 10px;white-space:nowrap}
+.foto-tasti input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.foto-tasti label:has(input:disabled){opacity:.45}
+.foto-anteprima{display:flex;align-items:center;gap:12px;margin-top:12px}
+.foto-anteprima img{width:60px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+#foto-info{margin-top:10px}
+
+/* Libreria di mobilità e stretching */
+.seg a{flex:1;display:grid;place-items:center;text-align:center;color:var(--ink-2);font-weight:600;font-size:15px;min-height:40px;border-radius:9px;text-decoration:none;padding:0 6px}
+.seg a[aria-current="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12),inset 0 -2px 0 var(--gold)}
+.three{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
+.casella{flex-direction:row;align-items:center;gap:10px;font-size:15px;color:var(--ink)}
+.casella input{width:22px;height:22px;accent-color:var(--primary);margin:0}
+.mob-dose{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}
+.mob-dose .rx{font-size:20px}
+
+/* Impostazioni della sezione mobilità */
+.mob-imp{margin-top:4px}
+.mob-imp .tag{flex:none}

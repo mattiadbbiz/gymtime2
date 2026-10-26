@@ -1,8 +1,8 @@
 // GymTime · mobilità e stretching: libreria, impostazioni, sessioni
 // Sezione libera accanto ad Allena e Storico: atleti, coach e admin si allenano da soli, nessuna scheda.
-// La libreria di base (creato_da vuoto) la modifica l'admin; un coach può aggiungere esercizi suoi.
+// La libreria la modifica solo l'admin: ogni cambiamento passa da lui. creato_da resta per le proposte future.
 import { json, corpo, fallisci, testo, intero, parseJSON, richiedi, leggibile, gestibile, oggi } from './util.js';
-import { ZONE, TIPI, ATTREZZI, DURATE_PREDEFINITE, pulisciDurate, secondiEsercizio, durataPiano } from '../public/js/mobilita.js';
+import { ZONE, TIPI, ATTREZZI, AREE, DURATE_PREDEFINITE, DURATA_MIN, DURATA_MAX, pulisciDurate, secondiEsercizio, durataPiano, maxSerie, faseDi } from '../public/js/mobilita.js';
 import { POSE } from '../public/js/omino.js';
 
 const CAMPI = ['nome', 'zona', 'tipo', 'riscaldamento', 'misura', 'valore', 'serie', 'per_lato', 'livello', 'attrezzo', 'animazione', 'muscolo', 'accorgimenti'];
@@ -61,7 +61,7 @@ function valori(d) {
 }
 
 export async function creaEsercizio(request, env, io) {
-  richiedi(io, 'admin', 'coach');
+  richiedi(io, 'admin');
   const v = valori(await corpo(request));
   try {
     const r = await env.DB.prepare(
@@ -77,8 +77,8 @@ export async function creaEsercizio(request, env, io) {
 async function modificabile(env, io, id) {
   const e = await env.DB.prepare('SELECT id, creato_da FROM libreria_mobilita WHERE id = ?').bind(id).first();
   if (!e) fallisci(404, 'Esercizio non trovato');
-  if (io.ruolo === 'admin' || (io.ruolo === 'coach' && e.creato_da === io.id)) return e;
-  fallisci(403, 'Puoi modificare solo gli esercizi che hai creato tu');
+  if (io.ruolo === 'admin') return e;
+  fallisci(403, 'La libreria la modifica solo l’admin');
 }
 
 export async function modificaEsercizio(request, env, io, id) {
@@ -110,7 +110,7 @@ export async function salvaImpostazioni(request, env, io) {
   richiedi(io, 'admin', 'coach');
   const d = await corpo(request);
   const durate = pulisciDurate(d.durate);
-  if (!durate.length) fallisci(400, 'Scegli almeno una durata tra 5 e 60 minuti');
+  if (!durate.length) fallisci(400, `Scegli almeno una durata tra ${DURATA_MIN} e ${DURATA_MAX} minuti`);
   await env.DB.prepare(
     `INSERT INTO impostazioni_mobilita (coach_id, attiva, durate, aggiornata_il) VALUES (?, ?, ?, datetime('now'))
      ON CONFLICT (coach_id) DO UPDATE SET attiva = excluded.attiva, durate = excluded.durate, aggiornata_il = excluded.aggiornata_il`
@@ -132,29 +132,35 @@ export function sessioneJSON(s) {
 export async function statoMobilita(env, io) {
   const imp = await impostazioniDi(env, proprietario(io));
   const data = oggi();
-  const [aperta, ultime, fatte] = await env.DB.batch([
+  const [aperta, ultime, fatte, ultima] = await env.DB.batch([
     env.DB.prepare(`SELECT id, durata_scelta, durata_stimata, passo_corrente, piano_json FROM sessioni_mobilita WHERE utente_id = ? AND data = ? AND stato = 'in_corso' ORDER BY id DESC LIMIT 1`).bind(io.id, data),
     env.DB.prepare(`SELECT id, data, durata_scelta, durata_stimata, zona FROM sessioni_mobilita WHERE utente_id = ? AND stato = 'completata' ORDER BY data DESC, id DESC LIMIT 5`).bind(io.id),
     env.DB.prepare('SELECT count(*) AS n FROM sessioni_mobilita WHERE utente_id = ? AND data = ?').bind(io.id, data),
+    env.DB.prepare(`SELECT piano_json FROM sessioni_mobilita WHERE utente_id = ? AND stato = 'completata' ORDER BY id DESC LIMIT 1`).bind(io.id),
   ]);
   const a = aperta.results[0];
+  const recenti = (parseJSON(ultima.results[0]?.piano_json, { esercizi: [] }).esercizi || []).map(e => e.id).filter(Boolean);
   return json({
     oggi: data, ...imp,
     aperta: a ? { id: a.id, durata_scelta: a.durata_scelta, durata_stimata: a.durata_stimata, passo: a.passo_corrente, esercizi: (parseJSON(a.piano_json, { esercizi: [] }).esercizi || []).length } : null,
-    ultime: ultime.results, rimaste_oggi: Math.max(0, MAX_AL_GIORNO - (fatte.results[0]?.n || 0))
+    ultime: ultime.results, recenti, rimaste_oggi: Math.max(0, MAX_AL_GIORNO - (fatte.results[0]?.n || 0))
   });
 }
 
-// Avvio: la proposta arriva come elenco di id della libreria. Il piano si ricostruisce qui,
-// con dosi e accorgimenti presi dal database, e si salva solo adesso.
+// Avvio: la proposta arriva come elenco di { id, serie, fase } (o solo id). Il piano si ricostruisce qui,
+// con dosi e accorgimenti presi dal database, e si salva solo adesso. Il generatore sceglie solo le serie.
 export async function avviaSessione(request, env, io) {
   const imp = await sezioneAttiva(env, io);
   const d = await corpo(request);
   const durata = intero(d.durata_scelta);
   if (!imp.durate.includes(durata)) fallisci(400, 'Durata non disponibile: ricarica la pagina');
-  let zona = null;
-  if (d.zona) { if (!ZONE[d.zona]) fallisci(400, 'Zona non valida'); zona = d.zona; }
-  const ids = (Array.isArray(d.esercizi) ? d.esercizi : []).map(x => intero(x && typeof x === 'object' ? x.id : x)).filter(n => n > 0);
+  // area su cui concentrarsi (colonna "zona"): alto, schiena, anche, gambe oppure nessuna
+  const scelta = d.area ?? d.zona ?? null;
+  if (scelta && !AREE[scelta]) fallisci(400, 'Area non valida');
+  const zona = scelta || null;
+  const voci = (Array.isArray(d.esercizi) ? d.esercizi : []).map(x => x && typeof x === 'object' ? x : { id: x });
+  const ids = voci.map(x => intero(x.id)).filter(n => n > 0);
+  if (ids.length !== voci.length) fallisci(400, 'Esercizio non valido');
   if (!ids.length) fallisci(400, 'La sessione non ha esercizi');
   if (ids.length > MAX_ESERCIZI) fallisci(400, `Massimo ${MAX_ESERCIZI} esercizi per sessione`);
   if (new Set(ids).size !== ids.length) fallisci(400, 'Lo stesso esercizio compare due volte');
@@ -175,10 +181,12 @@ export async function avviaSessione(request, env, io) {
 
   const esercizi = ids.map((id, rif) => {
     const e = perId.get(id);
+    const chieste = voci[rif].serie === undefined ? e.serie : intero(voci[rif].serie);
+    if (!chieste || chieste < 1 || chieste > Math.max(maxSerie(e), e.serie)) fallisci(400, `Troppe serie per ${e.nome}: genera di nuovo la sessione`);
     return {
-      rif, id, nome: e.nome, zona: e.zona, tipo: e.tipo, misura: e.misura, valore: e.valore, serie: e.serie,
+      rif, id, nome: e.nome, zona: e.zona, tipo: e.tipo, fase: faseDi(e.tipo, voci[rif].fase), misura: e.misura, valore: e.valore, serie: chieste,
       per_lato: !!e.per_lato, attrezzo: e.attrezzo, animazione: e.animazione, muscolo: e.muscolo || '',
-      accorgimenti: e.accorgimenti || '', secondi: secondiEsercizio(e)
+      accorgimenti: e.accorgimenti || '', secondi: secondiEsercizio({ ...e, serie: chieste })
     };
   });
   const r = await env.DB.prepare(

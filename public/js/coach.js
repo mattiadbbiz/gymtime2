@@ -3,6 +3,8 @@ import { api, esc, iniziale, dataCorta, RUOLI } from './api.js';
 import { stato, app, rotta, pagina, attesa, toast, chiedi, finestra, vai } from './ui.js';
 import { montaOmino, ominoSVG, ANIMAZIONI, animazione, POSE } from './omino.js';
 import { MODALITA, CAMPI, CAMPI_PROG, etichetta, rxTesto, valoriSettimana, lunedi, norm } from './regole.js';
+import { campoPeriodo, leggiPeriodo, controllaPeriodo, partiPeriodo, sceltePeriodo, fotoPerInvio } from './storico-schede.js';
+import { sceltaLibreria } from './mobilita-libreria.js';
 
 const PIU = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
 const SU = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
@@ -136,7 +138,7 @@ rotta(/^\/atleta\/(\d+)$/, async id => {
     <section class="card">
       <div class="card-testa"><h3>Storico</h3></div>
       <p class="small muted">${p.ultimo ? `Ultimo allenamento ${dataCorta(p.ultimo)} · ${p.allenamenti} in totale` : 'Nessun allenamento salvato'}</p>
-      <div class="azioni-riga"><a class="btn" href="#/storico/${id}">Apri storico</a></div>
+      <div class="azioni-riga"><a class="btn" href="#/storico/${id}">Apri storico</a><a class="btn" href="#/storico/${id}/schede">Schede</a><a class="btn" href="#/importa/${id}/storico">Aggiungi scheda vecchia</a></div>
     </section>
 
     ${io_ ? '' : `<section class="card">
@@ -224,7 +226,7 @@ const nuovoEsercizio = (x, modalita) => {
   return { esercizio_id: x ? x.id : null, nome: x ? x.nome : 'Esercizio', modalita: m, parametri: clona(PREDEFINITI[m]), tecnica: null, nota: '', gruppo: null, progressione: null, animazione: x ? x.animazione : 'free', aperto: true };
 };
 
-window.addEventListener('beforeunload', ev => { if (E.sporco && location.hash.startsWith('#/scheda/')) { ev.preventDefault(); ev.returnValue = ''; } });
+window.addEventListener('beforeunload', ev => { if (E.sporco && (location.hash.startsWith('#/scheda/') || location.hash.startsWith('#/storico-scheda/'))) { ev.preventDefault(); ev.returnValue = ''; } });
 
 rotta(/^\/scheda\/(\d+)$/, async id => {
   id = Number(id);
@@ -242,27 +244,65 @@ rotta(/^\/scheda\/(\d+)$/, async id => {
   } else {
     s = { nome: 'Scheda', settimane: 1, inizio: lunedi(oggiISO()), scarico: [], giorni: [{ nome: 'Giorno 1', esercizi: [] }] };
   }
-  Object.assign(E, { atleta: id, nomeAtleta: sch.atleta.nome, esiste: !!sch.scheda, scheda: s, giorno: 0, sporco: !!bozza, bozza: bozza || null });
+  Object.assign(E, { atleta: id, nomeAtleta: sch.atleta.nome, esiste: !!sch.scheda, scheda: s, giorno: 0, sporco: !!bozza, bozza: bozza || null, storico: false, storicoId: null });
   delete bozze[id];
+  disegnaEditor();
+});
+
+// Editor di una scheda vecchia per lo storico: nuova (da un'importazione) o importata da correggere.
+// Non diventa mai la scheda attiva.
+const esercizioEditor = x => ({ esercizio_id: x.esercizio_id, nome: x.nome, modalita: x.modalita, parametri: x.parametri, tecnica: x.tecnica,
+  nota: x.nota || '', gruppo: x.gruppo, progressione: x.progressione, animazione: x.animazione || libPerId(x.esercizio_id)?.animazione || 'free', aperto: false });
+rotta(/^\/storico-scheda\/(\d+)\/(nuova|\d+)$/, async (id, sid) => {
+  id = Number(id);
+  const indietro = `#/storico/${id}/schede`;
+  attesa('Scheda vecchia', indietro);
+  const [sch] = await Promise.all([api(`/api/schede/${id}`), libreria()]);
+  let s, bozza = null, storicoId = null;
+  if (sid === 'nuova') {
+    bozza = bozze[`s${id}`];
+    if (!bozza) return vai(`#/importa/${id}/storico`);
+    s = { nome: 'Scheda vecchia', settimane: 1, inizio: null, scarico: [], periodo_dal: null, periodo_al: null, nota: '',
+      giorni: bozza.giorni.map(g => ({ nome: g.nome, esercizi: g.esercizi.map(esercizioEditor) })) };
+  } else {
+    storicoId = Number(sid);
+    const { scheda } = await api(`/api/archivio/${storicoId}`);
+    if (scheda.origine !== 'importata') return vai(indietro);
+    s = { nome: scheda.nome, settimane: scheda.settimane, inizio: null, scarico: scheda.scarico || [], periodo_dal: scheda.periodo_dal, periodo_al: scheda.periodo_al, nota: scheda.nota || '',
+      giorni: scheda.giorni.map(g => ({ nome: g.nome, esercizi: g.esercizi.map(esercizioEditor) })) };
+  }
+  s.pp = { dal: partiPeriodo(s.periodo_dal), al: partiPeriodo(s.periodo_al) };
+  Object.assign(E, { atleta: id, nomeAtleta: sch.atleta.nome, esiste: false, scheda: s, giorno: 0, sporco: !!bozza, bozza, storico: true, storicoId });
+  delete bozze[`s${id}`];
   disegnaEditor();
 });
 
 function disegnaEditor() {
   const s = E.scheda;
-  pagina({ titolo: E.atleta === stato.io.id ? 'La tua scheda' : `Scheda di ${E.nomeAtleta}`, indietro: `#/atleta/${E.atleta}`, largo: true, html: `
-    ${E.bozza ? `<div class="avviso"><b>Anteprima importata${E.bozza.metodo === 'ai' ? ' con Workers AI' : ''}</b>
-      <p>Controlla esercizi e numeri, poi salva.${E.bozza.non_trovati?.length ? ` Non trovati in libreria: ${esc(E.bozza.non_trovati.join(', '))}. Puoi lasciarli così o sceglierli con “Cambia”.` : ''}</p></div>` : ''}
+  const mia = E.atleta === stato.io.id;
+  const titolo = E.storico ? (mia ? 'La tua scheda vecchia' : `Scheda vecchia di ${E.nomeAtleta}`) : (mia ? 'La tua scheda' : `Scheda di ${E.nomeAtleta}`);
+  const nonTrovati = E.bozza?.non_trovati?.length ? ` Non trovati in libreria: ${esc(E.bozza.non_trovati.join(', '))}. Puoi lasciarli così o sceglierli con “Cambia”.` : '';
+  pagina({ titolo, indietro: E.storico ? `#/storico/${E.atleta}/schede` : `#/atleta/${E.atleta}`, largo: true, html: `
+    ${E.storico ? `<div class="avviso"><b>${E.bozza ? `Anteprima importata${E.bozza.metodo === 'ai' ? ' con Workers AI' : ''}` : 'Scheda dello storico'}</b>
+      <p>Resta nello storico e non diventa la scheda attiva. Controlla esercizi, numeri e periodo, poi salva.${nonTrovati}</p></div>`
+    : E.bozza ? `<div class="avviso"><b>Anteprima importata${E.bozza.metodo === 'ai' ? ' con Workers AI' : ''}</b>
+      <p>Controlla esercizi e numeri, poi salva.${nonTrovati}</p></div>` : ''}
     <section class="card">
       <div class="two"><label>Nome della scheda<input data-s="nome" value="${esc(s.nome)}"></label>
         <label>Settimane<select data-s="settimane">${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${s.settimane === i + 1 ? 'selected' : ''}>${i + 1 === 1 ? '1 (sempre uguale)' : i + 1}</option>`).join('')}</select></label></div>
-      ${s.settimane > 1 ? `<div class="two" style="margin-top:10px"><label>Inizio settimana 1<input type="date" data-s="inizio" value="${esc(s.inizio)}"></label>
+      ${E.storico ? `<div class="two periodi" style="margin-top:10px">${campoPeriodo('dal', 'Dal', s.pp.dal)}${campoPeriodo('al', 'Al (facoltativo)', s.pp.al)}</div>
+        <p class="small muted" style="margin-top:6px">Basta mese e anno. Il giorno è facoltativo.</p>
+        <label style="margin-top:10px">Nota (facoltativa)<input data-s="nota" value="${esc(s.nota)}" maxlength="300" placeholder="Es. preparazione estiva, dal quaderno"></label>` : ''}
+      ${s.settimane > 1 ? `<div class="two" style="margin-top:10px">${E.storico ? '' : `<label>Inizio settimana 1<input type="date" data-s="inizio" value="${esc(s.inizio)}"></label>`}
         <div><span class="lbl">Settimane di scarico</span><div class="chips">${Array.from({ length: s.settimane }, (_, i) => `<button type="button" class="chip sm" data-scarico="${i + 1}" aria-pressed="${s.scarico.includes(i + 1)}">${i + 1}</button>`).join('')}</div></div></div>
-        <p class="small muted" style="margin-top:8px">La settimana 1 parte dal lunedì scelto. Nelle progressioni ogni valore resta valido anche per le settimane dopo, finché non lo cambi.</p>` : ''}
+        <p class="small muted" style="margin-top:8px">${E.storico ? '' : 'La settimana 1 parte dal lunedì scelto. '}Nelle progressioni ogni valore resta valido anche per le settimane dopo, finché non lo cambi.</p>` : ''}
     </section>
     <div class="tabs-giorni" role="tablist">${s.giorni.map((g, i) => `<button type="button" role="tab" data-giorno="${i}" aria-selected="${i === E.giorno}">${esc(g.nome || `Giorno ${i + 1}`)}<span class="n">${g.esercizi.length}</span></button>`).join('')}
       <button type="button" class="tab-piu" data-act="giorno-nuovo" aria-label="Aggiungi giorno">${PIU}</button></div>
     <div id="giorno">${htmlGiorno()}</div>`,
-    barra: `<button class="btn" type="button" id="altro">Altro</button><button class="btn primary grow" type="button" id="salva">${E.bozza && E.esiste ? 'Salva come nuova' : 'Salva scheda'}</button>` });
+    barra: E.storico
+      ? `${E.storicoId ? '<button class="btn" type="button" id="altro">Altro</button>' : ''}<button class="btn primary grow" type="button" id="salva">Salva nello storico</button>`
+      : `<button class="btn" type="button" id="altro">Altro</button><button class="btn primary grow" type="button" id="salva">${E.bozza && E.esiste ? 'Salva come nuova' : 'Salva scheda'}</button>` });
   collegaEditor();
 }
 
@@ -429,6 +469,7 @@ function collegaEditor() {
   app.oninput = ev => {
     const t = ev.target;
     if (t.dataset.s === 'nome') { E.scheda.nome = t.value; return segnaSporco(); }
+    if (t.dataset.s === 'nota') { E.scheda.nota = t.value; return segnaSporco(); }
     if (t.dataset.g === 'nome') {
       giornoCorrente().nome = t.value; segnaSporco();
       const tab = app.querySelector(`[data-giorno="${E.giorno}"]`); if (tab) tab.firstChild.textContent = t.value || `Giorno ${E.giorno + 1}`;
@@ -455,6 +496,7 @@ function collegaEditor() {
     const t = ev.target;
     if (t.dataset.s === 'settimane') { E.scheda.settimane = Number(t.value); E.scheda.scarico = E.scheda.scarico.filter(w => w <= E.scheda.settimane); segnaSporco(); return disegnaEditor(); }
     if (t.dataset.s === 'inizio') { E.scheda.inizio = t.value; return segnaSporco(); }
+    if (t.dataset.pp) { const n = t.closest('[data-periodo]').dataset.periodo; E.scheda.pp[n] = sceltePeriodo(app, n); return segnaSporco(); }
     if (t.dataset.k === 'modalita') {
       const e = esercizioDi(t), m = t.value;
       const p = {}; for (const c of CAMPI[m]) if (e.parametri[c] !== undefined) p[c] = e.parametri[c];
@@ -478,12 +520,13 @@ function collegaEditor() {
     }
   };
 
+  if (E.storico) return collegaBarraStorico();
   document.getElementById('salva').onclick = () => salvaScheda(!!(E.bozza && E.esiste));
   document.getElementById('altro').onclick = () => {
     const w = finestra(`<h3>Altre azioni</h3><div class="menu">
       ${E.esiste ? '<button type="button" class="btn" data-m="nuova">Salva come nuova scheda<span class="small muted">La scheda attuale va in archivio</span></button>' : ''}
       ${E.bozza && E.esiste ? '<button type="button" class="btn" data-m="sovrascrivi">Salva sostituendo quella attuale<span class="small muted">Senza archiviarla</span></button>' : ''}
-      <a class="btn" href="#/importa/${E.atleta}" data-m="importa">Importa da testo, voce o file<span class="small muted">Crea un’anteprima da controllare</span></a>
+      <a class="btn" href="#/importa/${E.atleta}" data-m="importa">Importa da testo, voce, file o foto<span class="small muted">Crea un’anteprima da controllare</span></a>
       ${E.esiste ? '<button type="button" class="btn danger" data-m="archivia">Archivia la scheda<span class="small muted">L’atleta resta senza scheda attiva</span></button>' : ''}
       </div><div class="azioni"><button type="button" class="btn" data-chiudi>Chiudi</button></div>`);
     w.onclick = async e => {
@@ -499,6 +542,54 @@ function collegaEditor() {
       }
     };
   };
+}
+
+// Barra dell'editor dello storico: salva, e per un'importata già salvata copia o elimina
+function collegaBarraStorico() {
+  document.getElementById('salva').onclick = salvaStorico;
+  const altro = document.getElementById('altro');
+  if (!altro) return;
+  altro.onclick = () => {
+    const w = finestra(`<h3>Altre azioni</h3><div class="menu">
+      <button type="button" class="btn" data-m="copia">Copia come scheda attiva<span class="small muted">Questa resta nello storico</span></button>
+      <button type="button" class="btn danger" data-m="elimina">Elimina dallo storico<span class="small muted">Le giornate di allenamento non vengono toccate</span></button>
+      </div><div class="azioni"><button type="button" class="btn" data-chiudi>Chiudi</button></div>`);
+    w.onclick = async e => {
+      if (e.target === w || e.target.closest('[data-chiudi]')) return w.remove();
+      const m = e.target.closest('[data-m]')?.dataset.m; if (!m) return;
+      w.remove();
+      if (m === 'copia') {
+        if (E.sporco) return toast('Prima salva le modifiche');
+        if (!await chiedi({ titolo: 'Copiarla come scheda attiva?', testo: 'Parte da oggi. Se l’atleta ha già una scheda, quella va in archivio.', ok: 'Copia' })) return;
+        try { await api(`/api/storico-schede/scheda/${E.storicoId}/attiva`, { metodo: 'POST', dati: { inizio: oggiISO() } }); toast('Ora è la scheda attiva'); vai(`#/atleta/${E.atleta}`); } catch (ex) { toast(ex.message); }
+      }
+      if (m === 'elimina') {
+        if (!await chiedi({ titolo: 'Eliminare questa scheda vecchia?', testo: 'Sparisce dallo storico.', ok: 'Elimina', pericolo: true })) return;
+        try { await api(`/api/storico-schede/scheda/${E.storicoId}`, { metodo: 'DELETE' }); E.sporco = false; toast('Scheda eliminata'); vai(`#/storico/${E.atleta}/schede`); } catch (ex) { toast(ex.message); }
+      }
+    };
+  };
+}
+
+async function salvaStorico() {
+  const s = E.scheda;
+  const vuoti = s.giorni.filter(g => !g.esercizi.length);
+  if (vuoti.length) { E.giorno = s.giorni.indexOf(vuoti[0]); disegnaEditor(); return toast(`${vuoti[0].nome || 'Un giorno'} non ha esercizi`); }
+  const dal = leggiPeriodo(app, 'dal'), al = leggiPeriodo(app, 'al');
+  const problema = dal.errore || al.errore || (!dal.valore ? 'Scegli almeno mese e anno di inizio' : '') || controllaPeriodo(dal.valore, al.valore);
+  if (problema) { app.querySelector('.periodi')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return toast(problema); }
+  const dati = {
+    nome: s.nome, settimane: s.settimane, scarico: s.scarico, periodo_dal: dal.valore, periodo_al: al.valore, nota: s.nota,
+    giorni: s.giorni.map(g => ({ nome: g.nome, esercizi: g.esercizi.map(({ aperto, animazione, ...e }) => e) }))
+  };
+  const b = document.getElementById('salva'); if (b) b.disabled = true;
+  try {
+    if (E.storicoId) await api(`/api/storico-schede/scheda/${E.storicoId}`, { metodo: 'PUT', dati });
+    else await api(`/api/storico-schede/${E.atleta}`, { metodo: 'POST', dati });
+    E.sporco = false; E.bozza = null;
+    toast('Scheda salvata nello storico');
+    vai(`#/storico/${E.atleta}/schede`);
+  } catch (ex) { toast(ex.message); if (b) b.disabled = false; }
 }
 
 async function salvaScheda(nuova) {
@@ -555,17 +646,24 @@ function sceltaEsercizio(scegli, cambio = false) {
 
 /* ======================= IMPORTAZIONE ======================= */
 const IMP = { testo: '', modo: 'scrivi' };
-rotta(/^\/importa\/(\d+)$/, async id => {
+const CAMERA = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+// /importa/12 crea la scheda attiva; /importa/12/storico una scheda vecchia per lo storico
+rotta(/^\/importa\/(\d+)(\/storico)?$/, async (id, storico) => {
   id = Number(id);
-  attesa('Importa', `#/atleta/${id}`);
+  storico = !!storico;
+  const indietro = storico ? `#/storico/${id}/schede` : `#/atleta/${id}`;
+  attesa('Importa', indietro);
   const { atleta } = await api(`/api/schede/${id}`);
   const ESEMPIO = 'Giorno 1\nTrazioni prone 4x6 (elastico se serve) rec 90\nBack squat 4x8 @ 40kg tempo 3-1-1-0\nPlank 3x30s\n\nGiorno 2\nEMOM 10 min trazioni 3\nAMRAP 12 min: 5 piegamenti, 10 squat';
   const disegna = () => {
-    pagina({ titolo: 'Importa scheda', indietro: `#/atleta/${id}`, html: `
-      <div class="intro"><p class="muted small">Per ${esc(atleta.nome)}</p><h1>Importa una scheda</h1>
-      <p class="hint">Scrivila, dettala o carica un file: diventa un’anteprima che controlli nell’editor prima di salvare.</p></div>
+    pagina({ titolo: storico ? 'Scheda vecchia' : 'Importa scheda', indietro, html: `
+      <div class="intro"><p class="muted small">Per ${esc(atleta.nome)}</p><h1>${storico ? 'Carica una scheda vecchia' : 'Importa una scheda'}</h1>
+      <p class="hint">${storico
+        ? 'Scrivila, dettala, carica un file o fotografa il foglio. Nell’anteprima scegli il periodo e salvi: resta nello storico e non diventa la scheda attiva.'
+        : 'Scrivila, dettala, carica un file o fotografa il foglio: diventa un’anteprima che controlli nell’editor prima di salvare.'}</p></div>
       <div class="seg" role="tablist"><button type="button" data-modo="scrivi" aria-current="${IMP.modo === 'scrivi'}">Scrivi</button>
-        <button type="button" data-modo="voce" aria-current="${IMP.modo === 'voce'}">Voce</button><button type="button" data-modo="file" aria-current="${IMP.modo === 'file'}">File</button></div>
+        <button type="button" data-modo="voce" aria-current="${IMP.modo === 'voce'}">Voce</button><button type="button" data-modo="file" aria-current="${IMP.modo === 'file'}">File</button>
+        <button type="button" data-modo="foto" aria-current="${IMP.modo === 'foto'}">Foto</button></div>
       <div id="imp-corpo"></div>
       <label class="full">Testo della scheda<textarea id="testo" rows="10" placeholder="${esc(ESEMPIO)}">${esc(IMP.testo)}</textarea></label>
       <p class="small muted">Una riga per esercizio. Va bene anche scritto come ti viene: “Giorno 2”, “4x8 con 40 kg”, “rec 90”, “EMOM 10 min”, “3x30s”.</p>`,
@@ -585,6 +683,13 @@ rotta(/^\/importa\/(\d+)$/, async id => {
         try { const r = await api('/api/importa/file', { metodo: 'POST', form: fd }); IMP.testo = r.testo; document.getElementById('testo').value = r.testo; lbl.textContent = `${f.name}: testo estratto, controllalo sotto`; }
         catch (ex) { lbl.textContent = 'Scegli un file'; toast(ex.message); }
       };
+    } else if (IMP.modo === 'foto') {
+      corpo.innerHTML = `<div class="card foto-imp">
+        <div class="foto-tasti"><label class="btn primary">${CAMERA}<span>Scatta foto</span><input type="file" accept="image/*" capture="environment" data-foto></label>
+          <label class="btn"><span>Dalla galleria</span><input type="file" accept="image/*" data-foto></label></div>
+        <div class="foto-anteprima" id="foto-ant" hidden><img alt=""><span class="small">Leggo la foto…</span></div>
+        <p class="small muted" id="foto-info">Foglio dritto, buona luce, tutta la scheda nell’inquadratura. Se è su più pagine, una foto per pagina: il testo si aggiunge sotto. La foto non viene salvata.</p></div>`;
+      collegaFoto(corpo);
     }
     app.onclick = e => { const m = e.target.closest('[data-modo]'); if (m) { IMP.testo = document.getElementById('testo').value; IMP.modo = m.dataset.modo; disegna(); } };
     document.getElementById('testo').oninput = e => { IMP.testo = e.target.value; };
@@ -594,13 +699,35 @@ rotta(/^\/importa\/(\d+)$/, async id => {
       ev.target.disabled = true; ev.target.textContent = 'Leggo la scheda…';
       try {
         const r = await api('/api/importa/analizza', { metodo: 'POST', dati: { testo } });
-        bozze[id] = r; IMP.testo = '';
-        vai(`#/scheda/${id}`);
+        IMP.testo = '';
+        if (storico) { bozze[`s${id}`] = r; vai(`#/storico-scheda/${id}/nuova`); }
+        else { bozze[id] = r; vai(`#/scheda/${id}`); }
       } catch (ex) { toast(ex.message); ev.target.disabled = false; ev.target.textContent = 'Crea anteprima'; }
     };
   };
   disegna();
 });
+
+// Foto del foglio: rimpicciolita nel telefono, letta da Workers AI, il testo si aggiunge sotto
+function collegaFoto(corpo) {
+  const ant = corpo.querySelector('#foto-ant'), info = corpo.querySelector('#foto-info');
+  corpo.querySelectorAll('[data-foto]').forEach(inp => inp.onchange = async () => {
+    const f = inp.files[0]; inp.value = '';
+    if (!f) return;
+    const url = URL.createObjectURL(f);
+    ant.querySelector('img').src = url; ant.hidden = false;
+    corpo.querySelectorAll('[data-foto]').forEach(x => { x.disabled = true; });
+    try {
+      const fd = new FormData(); fd.append('foto', await fotoPerInvio(f), 'scheda.jpg');
+      const r = await api('/api/importa/foto', { metodo: 'POST', form: fd });
+      const area = document.getElementById('testo');
+      IMP.testo = (area.value.trim() ? area.value.trim() + '\n\n' : '') + r.testo;
+      area.value = IMP.testo;
+      info.textContent = /\[\?\]/.test(r.testo) ? 'Fatto. Dove vedi [?] una parola non si leggeva: correggila nel testo sotto.' : 'Fatto: controlla il testo sotto. Puoi aggiungere un’altra foto.';
+    } catch (ex) { toast(ex.message); }
+    finally { ant.hidden = true; URL.revokeObjectURL(url); corpo.querySelectorAll('[data-foto]').forEach(x => { x.disabled = false; }); }
+  });
+}
 
 function collegaMicrofono() {
   const btn = document.getElementById('mic'), st = document.getElementById('mic-stato'), info = document.getElementById('mic-info');
@@ -647,6 +774,7 @@ rotta(/^\/libreria$/, async () => {
   const io = stato.io;
   const categorie = [...new Set(lib.map(x => x.categoria).filter(Boolean))].sort();
   pagina({ titolo: 'Libreria', html: `
+    ${sceltaLibreria('esercizi')}
     <div class="intro"><h1>Libreria</h1><p class="hint">${lib.length} esercizi. Tocca un esercizio per vedere l’omino e gli accorgimenti.</p></div>
     <input type="search" id="cerca" placeholder="Cerca per nome, muscolo, attrezzo" value="${esc(filtroLib.q)}" aria-label="Cerca" autocomplete="off">
     <div class="chips scroll" style="margin:10px 0 4px"><button type="button" class="chip sm" data-cat="" aria-pressed="${!filtroLib.cat}">Tutti</button>

@@ -4,6 +4,7 @@ import { stato, app, rotta, impostaBase, mostra, vai, pagina, toast, chiedi, cam
 import { montaOmino } from './omino.js';
 import './atleta.js';
 import './coach.js';
+import './mobilita-sessione.js';
 
 const ICONE = {
   calendario: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h2M12 14h2M16 14h0M8 17h2M12 17h2"/></svg>',
@@ -107,10 +108,12 @@ async function home() {
   const testa = `<header class="top"><div class="top-in" style="grid-template-columns:1fr auto">
     <span class="marchio"><img src="/icon.svg" alt="">GymTime</span><div class="top-right">${destra}</div></div></header>`;
   app.innerHTML = `${testa}<main class="wrap"><div class="attesa">Caricamento</div></main>`;
-  const [allena, persone] = await Promise.all([
+  const [allena, persone, mob] = await Promise.all([
     api('/api/allena').catch(() => null),
     io.ruolo === 'atleta' ? null : api('/api/utenti').catch(() => null),
+    api('/api/mobilita').catch(() => null),
   ]);
+  const mobAttiva = !!mob?.attiva;
   const oggi = testoOggi(allena);
   const tileAllena = (compatta) => `
     <a class="tile ${compatta ? 'compact' : 'main'}" href="#/allena">
@@ -120,14 +123,20 @@ async function home() {
   const tileStorico = (compatta) => `
     <a class="tile${compatta ? ' compact' : ''}" href="#/storico">
       <span class="tile-fig">${ICONE.calendario}</span>
-      <span><span class="tile-title">Storico</span><span class="tile-sub">Giornate, voti e costanza</span></span>
+      <span><span class="tile-title">Storico</span><span class="tile-sub">Giornate, voti e schede</span></span>
+    </a>`;
+  // Terzo tasto: mobilità e stretching, solo se la sezione è attiva
+  const tileMobilita = (riga) => `
+    <a class="tile compact${riga ? ' riga' : ''}" href="#/mobilita">
+      <span class="tile-fig" id="fig-mob"></span>
+      <span><span class="tile-title">Mobilità</span><span class="tile-sub">${mob?.aperta ? 'Riprendi la sessione' : 'Stretching e mobilità'}</span></span>
     </a>`;
   let corpo;
   if (io.ruolo === 'atleta') {
     corpo = `
       <div class="intro"><h1>Ciao ${esc(io.nome)}</h1>
       ${oggi ? `<div class="stato-oggi ${oggi.cls}"><span class="pallino"></span><span>${esc(oggi.t)}</span></div>` : ''}</div>
-      <div class="home">${tileAllena(false)}${tileStorico(false)}</div>`;
+      <div class="home">${tileAllena(false)}${mobAttiva ? `<div class="tiles-2">${tileStorico(true)}${tileMobilita(false)}</div>` : tileStorico(false)}</div>`;
   } else {
     const atleti = (persone?.persone || []).filter(p => p.ruolo === 'atleta' && p.id !== io.id);
     const coach = (persone?.persone || []).filter(p => p.ruolo === 'coach');
@@ -148,11 +157,13 @@ async function home() {
       ${allena?.scheda || allena?.giornata
         ? `${oggi ? `<div class="stato-oggi ${oggi.cls}"><span class="pallino"></span><span>${esc(oggi.t)}</span></div>` : ''}
            <div class="tiles-2" style="margin-top:12px">${tileAllena(true)}${tileStorico(true)}</div>`
-        : `<p class="hint">Per allenarti anche tu, apri ${io.ruolo === 'admin' ? 'Persone' : 'Atleti'}, scegli il tuo profilo e crea la tua scheda.</p>`}`;
+        : `<p class="hint">Per allenarti anche tu, apri ${io.ruolo === 'admin' ? 'Persone' : 'Atleti'}, scegli il tuo profilo e crea la tua scheda.</p>`}
+      ${mobAttiva ? `<div style="margin-top:12px">${tileMobilita(true)}</div>` : ''}`;
   }
   app.querySelector('main').innerHTML = corpo;
   const fa = document.getElementById('fig-allena'); if (fa) montaOmino(fa, 'squat_bil', { tempo: '1.6-0.3-1.2-0.6', muscoli: 'quadricipite, gluteo' });
   const fp = document.getElementById('fig-persone'); if (fp) montaOmino(fp, 'stacco', { tempo: '1.4-0.4-1.2-0.6', muscoli: 'gluteo, femorali, erettori' });
+  const fm = document.getElementById('fig-mob'); if (fm) montaOmino(fm, 'mob_cerchi_braccia', { muscoli: 'deltoidi' });
 }
 
 /* ---------- Profilo ---------- */

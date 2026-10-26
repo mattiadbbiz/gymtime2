@@ -350,6 +350,106 @@ export const POSE = {
     st({ arms: { ik: [3, 7.4], f: 't', b: -1 } }),
     st({ arms: { ik: [46.5, 23.2], b: -1 } })] },
 
+  /* --- Mobilità e stretching (Parte 4): tutte passano strumenti/controllo-pose.mjs --- */
+  // Collo
+  mob_collo_flesso: { nome: 'Collo: sì con la testa', inizia: 'conc', tempo: '1.2-0.4-1.2-0.4', keys: [
+    st({ hd: -24, arms: { a: [4, 8] } }), st({ hd: 32, arms: { a: [4, 8] } })] },
+  mob_collo_lat: { nome: 'Collo: allungamento laterale', vista: 'fronte', inizia: 'ecc', tenuta: 0, keys: [
+    st({ hd: 26, legs: { a: [3, 2] }, arms: [{ a: [6, 6] }, { a: [8, 8] }] })] },
+  // Spalle e torace
+  mob_cerchi_braccia: { nome: 'Cerchi con le braccia', vista: 'fronte', sc: [0.86, 30, G], inizia: 'conc', seg: [0.55, 0.55, 0.55, 0.55], keys: [
+    st({ legs: { a: [3, 2] }, arms: { a: [12, 12] } }), st({ legs: { a: [3, 2] }, arms: { a: [90, 90] } }),
+    st({ legs: { a: [3, 2] }, arms: { a: [172, 172] } }), st({ legs: { a: [3, 2] }, arms: { a: [90, 90] } })] },
+  mob_dislocazioni: { nome: 'Dislocazioni con bastone', vista: 'fronte', sc: [0.86, 30, G], inizia: 'conc', tempo: '1.4-0.2-1.4-0.2', props: [{ p: 'bastone' }], keys: [
+    st({ legs: { a: [3, 2] }, arms: { a: [32, 32] } }), st({ legs: { a: [3, 2] }, arms: { a: [158, 158] } })] },
+  mob_spalla_incrociata: { nome: 'Spalla: braccio incrociato', vista: 'fronte', inizia: 'ecc', tenuta: 0, keys: [
+    st({ legs: { a: [3, 2] }, arms: [{ a: [-84, -90] }, { ik: [24.4, 24.4], b: 1 }] })] },
+  mob_tricipite: { nome: 'Tricipite dietro la testa', inizia: 'ecc', tenuta: 0, keys: [
+    st({ hd: 6, arms: [{ a: [172, 318] }, { a: [6, 10] }] })] },
+  mob_apertura_petto: { nome: 'Apertura del petto, mani dietro', inizia: 'ecc', tenuta: 0, keys: [
+    st({ t: 6, hd: -10, arms: { a: [-34, -34] } })] },
+  // Quadrupedia e a terra
+  mob_gatto_mucca: { nome: 'Gatto e mucca', inizia: 'conc', tempo: '1.2-0.4-1.2-0.4', keys: [
+    { hip: [20, 41.4], t: 64, hd: 48, legs: { ik: [9.2, 53] }, arms: { ik: [32.6, 53.2], b: -1 } },
+    { hip: [20.2, 42.4], t: 70, hd: -34, legs: { ik: [9.2, 53] }, arms: { ik: [32.6, 53.2], b: -1 } }] },
+  mob_dondolo: { nome: 'Dondolo a quattro zampe', inizia: 'ecc', tempo: '1.2-0.4-1.2-0.4', keys: [
+    { hip: [20.4, 41.6], t: 66, hd: 0, legs: { ik: [9.4, 53] }, arms: { ik: [33, 53.2], b: -1 } },
+    { hip: [14.4, 43.4], t: 76, hd: -4, legs: { ik: [9.4, 53] }, arms: { ik: [33, 53.2], b: -1 } }] },
+  mob_bambino: { nome: 'Posizione del bambino', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [19.5, 47], t: 95, hd: 32, legs: { ik: [18, 53] }, arms: { ik: [48.5, 53], b: -1 } }] },
+  mob_bambino_resp: { nome: 'Respiro nella posizione del bambino', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [19.5, 47], t: 95, hd: 32, legs: { ik: [18, 53] }, arms: { ik: [17, 52.6] } }] },
+  mob_sfinge: { nome: 'Sfinge', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [26, 50.6], t: 62, hd: -18, legs: { a: [-86, -88], toe: 'punta' }, arms: { ik: [46.2, 53.2], b: -1 } }] },
+  mob_ginocchia_petto: { nome: 'Ginocchia al petto da supino', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [30, 50.8], t: -90, hd: 10, legs: { a: [222, 104] }, arms: { ik: [25.4, 42.6], b: -1 } }] },
+  mob_bacino: { nome: 'Basculamento del bacino', inizia: 'conc', tempo: '1.2-0.5-1.2-0.5', keys: [
+    { hip: [27, 50.8], nk: [12, 50.8], hd: 8, legs: { ik: [36.5, 53], b: 1 }, arms: { a: [86, 88] } },
+    { hip: [27.4, 49.4], nk: [12.1, 50.7], hd: 10, legs: { ik: [36.5, 53], b: 1 }, arms: { a: [86, 88] } }] },
+  mob_resp_supina: { nome: 'Respirazione da supino', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [27, 50.8], nk: [12, 50.8], hd: 8, legs: { ik: [36.5, 53], b: 1 }, arms: { ik: [27.4, 47.6], b: -1 } }] },
+  // Laterali
+  mob_inclinazioni_bastone: { nome: 'Inclinazioni laterali con bastone', vista: 'fronte', sc: [0.86, 30, G], inizia: 'conc', seg: [0.9, 0.9, 0.9, 0.9], props: [{ p: 'bastone' }], keys: [
+    st({ t: 0, legs: { a: [6, 4] }, arms: { a: [166, 166] } }), st({ t: 18, legs: { a: [6, 4] }, arms: { a: [166, 166] } }),
+    st({ t: 0, legs: { a: [6, 4] }, arms: { a: [166, 166] } }), st({ t: -18, legs: { a: [6, 4] }, arms: { a: [166, 166] } })] },
+  mob_laterale: { nome: 'Allungamento laterale in piedi', vista: 'fronte', sc: [0.86, 30, G], inizia: 'ecc', tenuta: 0, keys: [
+    st({ t: -16, legs: { a: [6, 4] }, arms: [{ a: [150, 132] }, { a: [6, 4] }] })] },
+  // Anche e glutei
+  mob_affondo_flessori: { nome: 'Affondo basso per i flessori dell’anca', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [25, 43.4], t: -2, legs: [{ ik: [39.6, 53] }, { ik: [11, 53], toe: 'punta' }], arms: { a: [8, 20] } }] },
+  mob_cerchi_anche: { nome: 'Cerchi con le anche', inizia: 'conc', seg: [0.6, 0.6, 0.6, 0.6], keys: [
+    { hip: [31.6, 31.8], t: -5, legs: { ik: [30, 53] }, arms: { ik: [1.4, -2.2], f: 'h' } },
+    { hip: [30, 31.5], t: 0, legs: { ik: [30, 53] }, arms: { ik: [1.4, -2.2], f: 'h' } },
+    { hip: [28.2, 31.9], t: 7, legs: { ik: [30, 53] }, arms: { ik: [1.4, -2.2], f: 'h' } },
+    { hip: [30, 31.5], t: 0, legs: { ik: [30, 53] }, arms: { ik: [1.4, -2.2], f: 'h' } }] },
+  mob_slanci: { nome: 'Slanci della gamba avanti e indietro', inizia: 'conc', tempo: '0.6-0-0.6-0', keys: [
+    { hip: [30, 31.4], t: 2, legs: [{ a: [-24, -40], toe: 'perp' }, { ik: [30, 53] }], arms: [{ a: [40, 60] }, { a: [-20, -10] }] },
+    { hip: [30, 31.6], t: -4, legs: [{ a: [68, 50], toe: 'perp' }, { ik: [30, 53] }], arms: [{ a: [-20, -10] }, { a: [40, 60] }] }] },
+  mob_marcia: { nome: 'Marcia con ginocchia alte', inizia: 'conc', tempo: '0.45-0-0.45-0', keys: [
+    { hip: [30, 31], t: 0, legs: [{ a: [86, 4], toe: 'punta' }, { ik: [30, 53] }], arms: [{ a: [-28, 20] }, { a: [50, 110] }] },
+    { hip: [30, 31], t: 0, legs: [{ ik: [30, 53] }, { a: [86, 4], toe: 'punta' }], arms: [{ a: [50, 110] }, { a: [-28, 20] }] }] },
+  mob_calciata: { nome: 'Calci ai glutei sul posto', inizia: 'conc', tempo: '0.4-0-0.4-0', keys: [
+    { hip: [30, 31.4], t: 4, legs: [{ a: [-6, -140], toe: 'punta' }, { ik: [30, 53] }], arms: [{ a: [30, 100] }, { a: [-20, 60] }] },
+    { hip: [30, 31.4], t: 4, legs: [{ ik: [30, 53] }, { a: [-6, -140], toe: 'punta' }], arms: [{ a: [-20, 60] }, { a: [30, 100] }] }] },
+  mob_squat_profondo: { nome: 'Squat profondo tenuto', inizia: 'ecc', tempo: '1.6-0.8-1.2-0.4', keys: [
+    st({ hip: [24, 40.8], t: 24, legs: { ik: [30.4, 53] }, arms: { ik: [5, 5.6], f: 't', b: -1 } }),
+    st({ hip: [23.4, 45.6], t: 30, legs: { ik: [30.4, 53] }, arms: { ik: [5, 5.6], f: 't', b: -1 } })] },
+  mob_ginocchio_petto: { nome: 'Ginocchio al petto in piedi', inizia: 'conc', tempo: '0.8-0.6-0.8-0.2', keys: [
+    { hip: [30, 31.4], t: 0, legs: [{ ik: [30, 53] }, { ik: [30, 53] }], arms: { a: [6, 12] } },
+    { hip: [30, 31.2], t: 2, legs: [{ a: [124, 4], toe: 'punta' }, { ik: [30, 53] }], arms: { ik: [39.2, 28.6], b: -1 } }] },
+  mob_figura4: { nome: 'Figura 4 da supino', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [27, 50.8], nk: [12, 50.8], hd: 12, legs: [{ a: [168, 80] }, { ik: [36.5, 53], b: 1 }], arms: { ik: [30.4, 47.6], b: -1 } }] },
+  // Adduttori
+  // Di fronte cosce e tibie vanno verso chi guarda: si vedono più corte (lenK)
+  mob_farfalla: { nome: 'Farfalla da seduto', vista: 'fronte', inizia: 'ecc', tenuta: 0, lenK: { th: 0.694, sh: 0.915 }, keys: [
+    { hip: [30, 50.2], t: 0, legs: [{ ik: [30.9, 54], b: 1, toe: [34.4, 54.2] }, { ik: [29.1, 54], b: -1, toe: [25.6, 54.2] }], arms: [{ ik: [31.8, 52.2], b: 1 }, { ik: [28.2, 52.2], b: -1 }] }] },
+  mob_affondo_laterale: { nome: 'Affondo laterale', vista: 'fronte', inizia: 'ecc', tempo: '1-0.4-1-0.2', keys: [
+    { hip: [30, 32.6], t: 0, legs: [{ ik: [41, 53], b: 1 }, { ik: [19, 53], b: -1 }], arms: { a: [12, 12] } },
+    { hip: [36.6, 40.8], t: 8, legs: [{ ik: [41, 53], b: 1 }, { ik: [19, 53], b: -1 }], arms: { a: [60, 40] } }] },
+  // Femorali
+  mob_femorali_seduto: { nome: 'Femorali da seduto, gambe tese', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [25.8, 50.4], t: 46, hd: -8, legs: { ik: [47.4, 53], toe: 'perp' }, arms: { ik: [43.2, 49.6], b: -1 } }] },
+  mob_inchino: { nome: 'Inchino a gambe morbide', inizia: 'ecc', tempo: '1.6-0.4-1.4-0.3', keys: [
+    st({ arms: { a: [4, 8] } }),
+    st({ hip: [24.6, 32.4], t: 86, hd: -12, legs: { ik: [30, 53] }, arms: { a: [2, 4] } })] },
+  mob_femorali_supino: { nome: 'Femorali da supino, gamba tesa', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [27, 50.8], t: -90, hd: 14, legs: [{ a: [166, 166], toe: 'perp' }, { a: [90, 90], toe: 'perp' }], arms: { ik: [28.6, 42.4], b: -1 } }] },
+  // Quadricipiti
+  mob_quadricipite: { nome: 'Quadricipite in piedi', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [30, 31.4], t: 2, legs: [{ a: [-6, -150], toe: 'punta' }, { ik: [30, 53] }], arms: [{ ik: [24.8, 33], b: -1 }, { a: [70, 86] }] }] },
+  // Caviglie e polpacci
+  mob_polpaccio: { nome: 'Polpaccio in affondo', inizia: 'ecc', tenuta: 0, keys: [
+    { hip: [28.4, 35.4], t: 16, hd: -4, legs: [{ ik: [37.4, 53] }, { ik: [16.4, 53] }], arms: { a: [78, 84] } }] },
+  mob_cerchi_caviglie: { nome: 'Cerchi con le caviglie', inizia: 'conc', tempo: '0.7-0-0.7-0', keys: [
+    { hip: [30, 31.4], t: 0, legs: [{ a: [42, 22], toe: 'punta' }, { ik: [30, 53] }], arms: { ik: [1.4, -2.2], f: 'h' } },
+    { hip: [30, 31.4], t: 0, legs: [{ a: [42, 22], toe: 'perp' }, { ik: [30, 53] }], arms: { ik: [1.4, -2.2], f: 'h' } }] },
+  mob_caviglia_avanti: { nome: 'Caviglia: ginocchio avanti', inizia: 'conc', tempo: '1-0.4-1-0.3', keys: [
+    { hip: [24.6, 42.6], t: 0, legs: [{ ik: [36, 53] }, { ik: [10.8, 53], toe: 'punta' }], arms: { ik: [8.4, 9.2], f: 't', b: -1 } },
+    { hip: [28, 43.6], t: 4, legs: [{ ik: [36, 53] }, { ik: [10.8, 53], toe: 'punta' }], arms: { ik: [8.4, 9.2], f: 't', b: -1 } }] },
+  // Polsi
+  mob_cerchi_polsi: { nome: 'Cerchi con i polsi', inizia: 'conc', tempo: '0.5-0-0.5-0', keys: [
+    st({ arms: { a: [26, 96] } }), st({ arms: { a: [26, 70] } })] },
+
   /* --- Generico --- */
   free: { nome: 'Generico', vista: 'fronte', inizia: 'conc', keys: [
     st({ legs: { a: [4, 2] }, arms: { a: [14, 18] } }),
@@ -411,10 +511,15 @@ function risolviArto(spec, root, ctx, l1, l2, i, specchio) {
     tg = [tg[0] + ctx.dx, tg[1]];
     let b = spec.b ?? def;
     if (specchio) b = -b;
-    if (ctx.vista === 'fronte' || spec.libero) return ik(root, tg, l1, l2, b);
-    // Di lato: delle due piegature possibili tengo quella anatomica
-    const s1 = ik(root, tg, l1, l2, 1), s2 = ik(root, tg, l1, l2, -1);
-    return flessione(root, s1, ctx.gambe) >= flessione(root, s2, ctx.gambe) ? s1 : s2;
+    let r;
+    if (ctx.vista === 'fronte' || spec.libero) r = ik(root, tg, l1, l2, b);
+    else {
+      // Di lato: delle due piegature possibili tengo quella anatomica
+      const s1 = ik(root, tg, l1, l2, 1), s2 = ik(root, tg, l1, l2, -1);
+      r = flessione(root, s1, ctx.gambe) >= flessione(root, s2, ctx.gambe) ? s1 : s2;
+    }
+    if (mancati) mancati.push(dist(r[1], tg));   // solo durante il controllo anatomico
+    return r;
   }
   let a = spec.a || [0, 0];
   if (ctx.vista === 'fronte') {
@@ -637,6 +742,12 @@ function propSVG(pr, J) {
     case 'maniglia': { const c = at(pr.at); return `<line class="eq" x1="${fx(c[0] - 2)}" x2="${fx(c[0] + 2)}" y1="${fx(c[1])}" y2="${fx(c[1])}"/>`; }
     case 'cavo': { const c = at(pr.at); const to = pr.to; return `<line class="cv" x1="${fx(c[0])}" y1="${fx(c[1])}" x2="${to[0]}" y2="${to[1]}"/><circle class="eqf" cx="${to[0]}" cy="${to[1]}" r="1.4"/>`; }
     case 'piatto': { const c = J.a1; const v = dir(pr.ang + 90); return `<line class="eqs" x1="${fx(c[0] - v[0] * 6 + 1.2)}" y1="${fx(c[1] - v[1] * 6 + 1.2)}" x2="${fx(c[0] + v[0] * 6 + 1.2)}" y2="${fx(c[1] + v[1] * 6 + 1.2)}"/>`; }
+    case 'bastone': {
+      // Di fronte il bastone passa per le due mani; di lato si vede di punta
+      if (J.vista === 'fronte') { const a = J.w1, b = J.w2, d = dist(a, b) || 1, v = [(b[0] - a[0]) / d, (b[1] - a[1]) / d];
+        return `<line class="eqs" x1="${fx(a[0] - v[0] * 3.5)}" y1="${fx(a[1] - v[1] * 3.5)}" x2="${fx(b[0] + v[0] * 3.5)}" y2="${fx(b[1] + v[1] * 3.5)}"/>`; }
+      const c = at(pr.at || 'w1'); return `<circle class="eqf" cx="${fx(c[0])}" cy="${fx(c[1])}" r="1.1"/>`;
+    }
     case 'anelli': {
       // Anello da ginnastica (circa 23 cm, spessore 28 mm) impugnato nella parte bassa, appeso con una cinghia
       const w = at(pr.at), r = 2.6, c = [w[0], w[1] - r + 0.55];
@@ -670,7 +781,7 @@ function scenaSVG(P) {
   }
   return out.join('');
 }
-const SCENA_DINAMICA = new Set(['bil', 'man', 'peso', 'palla', 'kb', 'ruota', 'rullo', 'maniglia', 'cavo', 'piatto', 'anelli']);
+const SCENA_DINAMICA = new Set(['bil', 'man', 'peso', 'palla', 'kb', 'ruota', 'rullo', 'maniglia', 'cavo', 'piatto', 'anelli', 'bastone']);
 
 function corpoSVG(P, J, ev = new Set()) {
   const vf = J.vista === 'fronte';
@@ -727,6 +838,17 @@ function fase(P, s, tempo, inizia) {
   }
   return [0, 1, 0];
 }
+
+/* ---------- Controllo anatomico (strumenti/controllo-pose.mjs) ---------- */
+// Giunti di un fotogramma più la distanza massima tra mano o piede e il suo appoggio
+let mancati = null;
+export function giuntiPerControllo(anim, kA, kB, u) {
+  const P = POSE[anim];
+  mancati = [];
+  try { const J = posa(P, kA, kB, u); J.manca = Math.max(0, ...mancati); return J; }
+  finally { mancati = null; }
+}
+export const MISURE = { L, G, flessione, giunti, angoliDi };
 
 /* ---------- API ---------- */
 function frame(P, s, opz) {
