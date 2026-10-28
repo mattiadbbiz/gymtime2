@@ -140,7 +140,7 @@ async function home() {
   } else {
     const atleti = (persone?.persone || []).filter(p => p.ruolo === 'atleta' && p.id !== io.id);
     const coach = (persone?.persone || []).filter(p => p.ruolo === 'coach');
-    const sub = io.ruolo === 'admin' ? `${coach.length} coach · ${atleti.length} ${atleti.length === 1 ? 'atleta' : 'atleti'}` : `${atleti.length} ${atleti.length === 1 ? 'atleta' : 'atleti'}`;
+    const sub = io.ruolo === 'admin' ? `${coach.length} coach · ${atleti.length} atleti` : `${atleti.length} ${atleti.length === 1 ? 'atleta' : 'atleti'}`;
     corpo = `
       <div class="intro"><h1>Ciao ${esc(io.nome)}</h1><p class="muted">${RUOLI[io.ruolo]}</p></div>
       <div class="home">
