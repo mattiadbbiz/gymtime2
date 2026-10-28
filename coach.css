@@ -1,0 +1,175 @@
+/* GymTime · schermate di coach e admin */
+input[type="search"]{margin-bottom:4px}
+.grow{flex:1}
+
+/* Persone */
+.persone{list-style:none;padding:0;margin:10px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.persona{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);color:var(--ink);text-decoration:none}
+.p-testo{flex:1;display:flex;flex-direction:column;min-width:0}
+.p-testo b{font-size:18px}
+.p-testo .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-tag{flex:none}
+.credenziali{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:14px 0 4px}
+.credenziali div{background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column}
+.credenziali b{font-family:"Barlow Condensed",sans-serif;font-size:24px;overflow-wrap:anywhere}
+
+/* Pagina di una persona */
+.card-testa{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.scheda-nome{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:700;line-height:1.1}
+.azioni-riga{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.azioni-mini{display:flex;gap:6px;align-items:center}
+.azioni-mini.fine{align-self:end;justify-content:flex-end}
+.archivio{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.archivio summary{cursor:pointer;font-weight:600}
+.archivio ul{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}
+.archivio li{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.archivio li>span:first-child{display:flex;flex-direction:column}
+.riepilogo{max-height:55vh;overflow:auto;margin-top:8px;font-size:15px}
+.riepilogo ul{margin:4px 0 10px;padding-left:18px}
+
+/* Editor */
+.avviso{background:var(--surface-2);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:14px;padding:12px 14px;margin:12px 0}
+.avviso p{font-size:15px;color:var(--ink-2);margin-top:4px}
+.lbl{display:block;font-size:14px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.chip.sm{min-height:36px;padding:0 12px;font-size:14px}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips.scroll::-webkit-scrollbar{display:none}
+.chips.scroll .chip{flex:none}
+.tabs-giorni{display:flex;gap:8px;overflow-x:auto;margin:16px 0 10px;padding-bottom:4px;scrollbar-width:none}
+.tabs-giorni::-webkit-scrollbar{display:none}
+.tabs-giorni button{flex:none;min-height:42px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+.tabs-giorni button[aria-selected="true"]{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:inset 0 -3px 0 var(--gold)}
+.tabs-giorni .n{font-size:12px;min-width:20px;height:20px;border-radius:99px;background:rgba(127,127,127,.18);display:grid;place-items:center;padding:0 5px}
+.tabs-giorni .tab-piu{width:42px;padding:0;justify-content:center}
+.tabs-giorni svg,.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.giorno-testa{display:flex;gap:10px;align-items:flex-end;margin-bottom:12px}
+.giorno-testa .btn.sm{width:38px;padding:0}
+.es-lista{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.es-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.es-card.in-gruppo{border-left:4px solid var(--gold)}
+.es-card.aperto{border-color:var(--gold)}
+.es-testa{width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;background:none;border:0;text-align:left;color:var(--ink)}
+.es-t{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}
+.es-t b{font-size:18px;line-height:1.15}
+.freccia svg{width:20px;height:20px;fill:none;stroke:var(--ink-2);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.prog-r{color:var(--ok);font-weight:600}
+.es-corpo{padding:4px 12px 14px;display:grid;gap:12px;border-top:1px solid var(--line)}
+.riga-btn{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:10px}
+.riga-btn .btn.sm[aria-label]{width:38px;padding:0}
+.campi{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.campi label.full{grid-column:1/-1}
+.prog{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface-2)}
+.prog summary{cursor:pointer;font-weight:700;font-family:"Barlow Condensed",sans-serif;font-size:19px}
+.prog[open] summary{margin-bottom:6px}
+.prog-scroll{overflow-x:auto;margin:8px -4px 10px;padding:0 4px}
+.prog-tab{border-collapse:separate;border-spacing:4px;min-width:100%}
+.prog-tab th{font-size:12px;font-weight:600;color:var(--ink-2);text-align:center;white-space:nowrap;padding:0 2px}
+.prog-tab tbody th{font-family:"Barlow Condensed",sans-serif;font-size:18px;color:var(--ink);width:44px}
+.prog-tab tbody th span{display:block;font-family:Barlow,sans-serif;font-size:10px;color:var(--gold-2);text-transform:uppercase}
+.prog-tab td{min-width:64px}
+.prog-tab td input{min-height:38px;padding:6px 8px;text-align:center;font-size:15px}
+.prog-tab td.base{text-align:center;font-weight:700;background:var(--surface);border-radius:8px;border:1px dashed var(--line);font-size:15px}
+.prog-tab tr.scarico td input{border-color:var(--gold)}
+.scorciatoie{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.scorciatoie .inc{width:74px;min-height:38px;padding:6px 8px}
+.scorciatoie .inc-c{width:auto;min-height:38px;padding:6px 8px}
+.aggiungi{margin-top:12px;border-style:dashed}
+.menu{display:grid;gap:8px;margin-top:10px}
+.menu .btn{flex-direction:column;align-items:flex-start;justify-content:center;min-height:58px;text-align:left;gap:2px}
+.menu .btn .small{font-weight:400}
+
+/* Finestra grande: scelta esercizio, dettaglio libreria */
+.dialogo.grande{max-height:min(88vh,760px);display:flex;flex-direction:column;overflow:auto}
+.scelta{display:flex;flex-direction:column;min-height:0;max-height:calc(min(88vh,760px) - 40px)}
+.scelta-testa{display:grid;gap:10px;margin-bottom:8px}
+.scelta-lista{list-style:none;padding:0;margin:0;overflow:auto;flex:1;display:grid;grid-template-columns:minmax(0,1fr);gap:6px;align-content:start}
+.scelta-lista button,.lib-riga{width:100%;display:flex;align-items:center;gap:12px;padding:8px;border-radius:12px;border:1px solid var(--line);background:var(--surface);text-align:left;color:var(--ink)}
+.scelta-lista button>span:last-child,.lib-riga>span:last-child{display:flex;flex-direction:column;min-width:0}
+.es-card,.es-corpo,.prog{min-width:0}
+.scelta-lista .mini,.lib-riga .mini{width:48px;height:48px}
+.lib-lista{list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.lib-riga b{font-size:17px}
+.es-dettaglio .stage{width:200px;margin:0 auto 10px;aspect-ratio:1}
+.es-dettaglio h3{font-size:28px}
+.es-dettaglio .accorgimenti{margin-top:12px}
+.tempo-prova{margin-top:12px}
+.anim-scelta{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center}
+.anim-scelta .stage{aspect-ratio:1;border-radius:14px}
+
+/* Importazione */
+.registra{display:flex;gap:16px;align-items:center}
+.btn-mic{flex:none;width:76px;height:76px;border-radius:50%;border:0;background:var(--primary);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 3px var(--gold)}
+.btn-mic svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.btn-mic.rec{animation:pulsa 1.2s ease-in-out infinite;background:var(--danger)}
+@keyframes pulsa{50%{box-shadow:0 0 0 9px color-mix(in srgb,var(--gold) 35%,transparent)}}
+.carica{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;border-style:dashed;cursor:pointer;padding:22px}
+.carica input{position:absolute;opacity:0;width:1px;height:1px}
+.carica b{font-family:"Barlow Condensed",sans-serif;font-size:22px}
+
+/* Domande */
+.domande-ed{list-style:none;padding:0;margin:8px 0 0}
+.domande-ed .card{display:grid;gap:10px}
+
+@media (prefers-reduced-motion: reduce){ .btn-mic.rec{animation:none} }
+@media (max-width:380px){ .campi{grid-template-columns:1fr 1fr} .giorno-testa{flex-wrap:wrap} }
+
+/* Storico delle schede */
+.aggiungi-scheda{width:100%;margin-bottom:10px;gap:8px}
+.lista-schede{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.carta-scheda{width:100%;text-align:left;display:grid;gap:4px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:14px 16px;font:inherit}
+.carta-scheda:active{background:var(--surface-2)}
+.cs-testa{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.cs-testa b{font-family:"Barlow Condensed",sans-serif;font-size:21px;line-height:1.1}
+.cs-nota{color:var(--ink-2);font-style:italic}
+.cs-dettaglio .tag{margin-right:4px}
+.cs-dettaglio .menu{margin-top:12px}
+.periodo{border:0;padding:0;margin:0;min-width:0}
+.periodo legend{padding:0}
+.periodo-in{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:6px}
+.periodo select{min-width:0;padding-left:8px;padding-right:2px;font-size:15px}
+.periodi{align-items:start}
+@media (max-width:560px){ .periodi{grid-template-columns:1fr} }
+
+/* Foto della scheda */
+.foto-tasti{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.foto-tasti label{position:relative;flex-direction:row;justify-content:center;gap:6px;padding:0 10px;white-space:nowrap}
+.foto-tasti input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.foto-tasti label:has(input:disabled){opacity:.45}
+.foto-anteprima{display:flex;align-items:center;gap:12px;margin-top:12px}
+.foto-anteprima img{width:60px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+#foto-info{margin-top:10px}
+
+/* Libreria di mobilità e stretching */
+.seg a{flex:1;display:grid;place-items:center;text-align:center;color:var(--ink-2);font-weight:600;font-size:15px;min-height:40px;border-radius:9px;text-decoration:none;padding:0 6px}
+.seg a[aria-current="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12),inset 0 -2px 0 var(--gold)}
+.three{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
+.casella{flex-direction:row;align-items:center;gap:10px;font-size:15px;color:var(--ink)}
+.casella input{width:22px;height:22px;accent-color:var(--primary);margin:0}
+.mob-dose{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}
+.mob-dose .rx{font-size:20px}
+
+/* Impostazioni della sezione mobilità */
+.mob-imp{margin-top:4px}
+.mob-imp .tag{flex:none}
+
+/* Superserie: blocco con giri, recupero e pause tra gli esercizi */
+.ss-blocco{border:1px solid var(--gold);border-radius:18px;padding:10px;background:rgba(214,178,94,.08);display:grid;gap:10px;min-width:0}
+.ss-testa{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ss-testa b{font-family:"Barlow Condensed",sans-serif;font-size:19px;color:var(--primary)}
+.ss-lista{gap:0}
+.ss-lista .es-card.in-gruppo{border-left-width:1px}
+.ss-pausa{display:flex;justify-content:center;padding:6px 0;position:relative}
+.ss-pausa::before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px dashed var(--gold)}
+.ss-pausa label{position:relative;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 6px 4px 12px;font-size:13px;flex-wrap:wrap;justify-content:center;text-align:center;font-weight:600;color:var(--ink-2);max-width:100%}
+.ss-pausa-in{display:flex;align-items:center;gap:4px;flex:none}
+.ss-pausa input{width:64px;min-height:34px;padding:0 8px;text-align:center}
+.ss-piu{justify-self:start}
+
+/* Varianti dell'omino nella carta dell'esercizio */
+.var-box{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:10px;min-width:0}
+.var-anteprima{width:96px;flex:none;aspect-ratio:1;border-radius:12px}
+.var-scelte{display:grid;gap:8px;min-width:0;flex:1}
+.var-riga .lbl{margin-bottom:3px}
+.var-riga .chips{flex-wrap:wrap}
+.var-t{display:block;color:var(--ink-2)}
+@media (max-width:420px){.var-box{flex-direction:column;align-items:center}.var-scelte{width:100%}}
