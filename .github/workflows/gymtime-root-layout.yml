@@ -1,0 +1,159 @@
+name: GymTime - riallinea progetto in main
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/gymtime-root-layout.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: gymtime-root-layout-main
+  cancel-in-progress: false
+jobs:
+  correggi:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Ricolloca i file senza operazioni D1
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "main"
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, tomllib, hashlib, subprocess
+
+          source=Path('migrations')
+          required=['public/js/app.js','public/js/navigazione.js','public/js/atleta-sezioni.js','public/js/cardio.js','public/js/recuperi.js','public/js/omino3d.js','public/gymtime.css','src/index.js','src/sessioni-libere.js','migrations/0007_varianti.sql','migrations/0008_cardio_libreria.sql','migrations/0009_sessioni_libere.sql','wrangler.toml','package.json']
+          if not (source/'public/js/navigazione.js').is_file():
+              assert all(Path(p).is_file() for p in required), 'Copia aggiornata non trovata'
+              raise SystemExit(0)
+          changed=subprocess.run(['git','diff','--name-only','65fe312f2b7bf5c1a7e644ef6c353370a3a4c60d','HEAD','--','src','public','migrations','strumenti','documentazione','README.md','package.json','package-lock.json','wrangler.toml'],check=True,capture_output=True,text=True).stdout
+          assert not changed.strip(), 'File modificati dopo la verifica: fermarsi e riconfrontare'
+          assert all((source/p).is_file() for p in required), 'File sorgente mancante'
+          plan=[]
+          for directory in ('src','public','strumenti','documentazione','migrations'):
+              origin=source/directory
+              assert origin.is_dir(), str(origin)
+              for item in sorted(origin.rglob('*')):
+                  assert not item.is_symlink(), str(item)
+                  if not item.is_file():
+                      continue
+                  destination=Path(directory)/item.relative_to(origin)
+                  if directory=='migrations' and destination.exists():
+                      assert item.read_bytes()==destination.read_bytes(), 'Migrazione storica diversa: '+str(destination)
+                  plan.append((item,destination))
+          for filename in ('README.md','package.json'):
+              assert (source/filename).is_file(), filename
+              plan.append((source/filename,Path(filename)))
+          config=(source/'wrangler.toml').read_text()
+          parsed=tomllib.loads(config)
+          assert parsed['main']=='src/index.js'
+          assert parsed['assets']['directory']=='./public'
+          dbs=parsed['d1_databases']
+          assert len(dbs)==1 and dbs[0]['binding']=='DB'
+          assert dbs[0]['database_name']=='gymtime'
+          assert dbs[0]['database_id']=='d7ae0716-6899-4722-bbf5-58465e7ed77d'
+          assert dbs[0]['migrations_dir']=='migrations'
+          assert parsed['name'] in ('gymtime','gymtime2')
+          config=config.replace('name = "gymtime"','name = "gymtime2"',1)
+          assert tomllib.loads(config)['name']=='gymtime2'
+          legacy=Path('migrations/0003_libreria.sql')
+          if legacy.exists():
+              data=legacy.read_bytes()
+              blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              assert blob=='a858f06d487f593b064fcefee4274bcd0d795771', 'Vecchio seed modificato: controllare'
+          for origin,destination in plan:
+              destination.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(origin,destination)
+              assert origin.read_bytes()==destination.read_bytes(), str(destination)
+          Path('wrangler.toml').write_text(config)
+          for directory in ('src','public','strumenti','documentazione','migrations'):
+              shutil.rmtree(source/directory)
+          for filename in ('README.md','package.json','wrangler.toml'):
+              (source/filename).unlink()
+          if legacy.exists():
+              archived=Path('documentazione/legacy/0003_libreria.sql')
+              archived.parent.mkdir(parents=True,exist_ok=True)
+              assert not archived.exists(), 'Archivio legacy gia presente: controllare'
+              shutil.move(str(legacy),str(archived))
+          Path('public/prova-omini.html').unlink(missing_ok=True)
+          ignore=Path('.gitignore')
+          content=ignore.read_text() if ignore.exists() else ''
+          for pattern in ['node_modules/','.wrangler/','.dev.vars*','.env*','.gymtime-*','backup-*.sql','*.zip']:
+              if pattern not in content.splitlines():
+                  content=content.rstrip('\n')+'\n'+pattern+'\n'
+          ignore.write_text(content.lstrip('\n'))
+          print('File riportati nella radice; copie verificate byte per byte; database non contattato.')
+          PY
+      - name: Genera il lockfile senza eseguire script dei pacchetti
+        shell: bash
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Verifica sintassi, import Worker e pose
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find src public/js strumenti -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
+          node --input-type=module -e "import('./src/index.js').then(() => console.log('Worker imports OK'))"
+          node strumenti/controllo-pose.mjs | tee /tmp/gymtime-pose.log
+          grep -q '299/299' /tmp/gymtime-pose.log
+          node strumenti/controllo-3d.mjs | tee /tmp/gymtime-3d.log
+          grep -q '299/299' /tmp/gymtime-3d.log
+      - name: Verifica lo schema solo in memoria e aggiorna il report
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import sqlite3, tomllib, json, hashlib
+          from datetime import datetime, timezone
+          required=['public/js/navigazione.js','public/js/atleta-sezioni.js','public/js/cardio.js','public/js/recuperi.js','public/js/omino3d.js','public/gymtime.css','src/sessioni-libere.js','migrations/0007_varianti.sql','migrations/0008_cardio_libreria.sql','migrations/0009_sessioni_libere.sql','package-lock.json']
+          assert all(Path(p).is_file() for p in required), 'File aggiornati mancanti'
+          for old in ['migrations/public','migrations/src','migrations/migrations','migrations/strumenti','migrations/documentazione','public/prova-omini.html','migrations/0003_libreria.sql']:
+              assert not Path(old).exists(), old
+          config=tomllib.loads(Path('wrangler.toml').read_text())
+          assert config['name']=='gymtime2' and config['main']=='src/index.js'
+          assert config['assets']['directory']=='./public'
+          for name in ('navigazione.js','atleta-sezioni.js','cardio.js'):
+              assert name in Path('public/js/app.js').read_text(), name
+          assert '/gymtime.css' in Path('public/index.html').read_text()
+          db=sqlite3.connect(':memory:')
+          db.execute('PRAGMA foreign_keys=ON')
+          for migration in sorted(Path('migrations').glob('*.sql')):
+              db.executescript(migration.read_text())
+          assert not db.execute('PRAGMA foreign_key_check').fetchall()
+          assert db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='sessioni_cardio'").fetchone()
+          assert 'tipo_sessione' in {row[1] for row in db.execute('PRAGMA table_info(sessioni_mobilita)')}
+          report={'timestamp_utc':datetime.now(timezone.utc).isoformat(),'scope':'correzione percorsi su main','worker':'gymtime2','migrazioni_testate':[p.name for p in sorted(Path('migrations').glob('*.sql'))],'sqlite':'solo memoria, nessun D1 remoto','pose_svg':'299/299','pose_3d':'299/299','browser_produzione':'non verificato da questo workflow'}
+          Path('documentazione/VERIFICHE-CORREZIONE-PERCORSI.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          files=[]
+          for directory in ('src','public','migrations','strumenti','documentazione'):
+              files.extend(p for p in Path(directory).rglob('*') if p.is_file())
+          files.extend(Path(p) for p in ['README.md','package.json','package-lock.json','wrangler.toml','.gitignore'])
+          manifest=[{'path':p.as_posix(),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(set(files)) if p.as_posix()!='documentazione/MANIFEST.json']
+          Path('documentazione/MANIFEST.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2))
+          print('Verifiche locali completate: nessun accesso al database remoto.')
+          PY
+      - name: Registra la correzione direttamente su main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "main"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- src public migrations strumenti documentazione README.md package.json package-lock.json wrangler.toml .gitignore
+          if git diff --cached --quiet; then
+            echo 'Nessuna modifica da registrare.'
+            exit 0
+          fi
+          git commit -m "Fix GymTime root layout, Worker name and reproducible dependencies"
+          git push origin HEAD:main
