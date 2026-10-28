@@ -99,7 +99,7 @@ function dettaglio(x, admin) {
 }
 
 // Omini disponibili: prima quelli di mobilità e stretching, poi gli altri
-const omini = () => Object.entries(POSE).map(([k, p]) => [k, p.nome])
+const omini = () => Object.entries(POSE).filter(([, p]) => !p.generata).map(([k, p]) => [k, p.nome])
   .sort((a, b) => (b[0].startsWith('mob_') - a[0].startsWith('mob_')) || a[1].localeCompare(b[1], 'it'));
 const opzioni = (o, sel) => Object.entries(o).map(([k, l]) => `<option value="${k}" ${String(sel) === String(k) ? 'selected' : ''}>${esc(l)}</option>`).join('');
 

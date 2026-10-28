@@ -1,0 +1,20 @@
+{
+  "timestamp_utc": "2026-10-28T18:32:13.758486+00:00",
+  "scope": "correzione percorsi su main",
+  "worker": "gymtime2",
+  "migrazioni_testate": [
+    "0001_init.sql",
+    "0002_accesso.sql",
+    "0003_settimane_libreria.sql",
+    "0004_storico_schede.sql",
+    "0005_mobilita.sql",
+    "0006_libreria_mobilita.sql",
+    "0007_varianti.sql",
+    "0008_cardio_libreria.sql",
+    "0009_sessioni_libere.sql"
+  ],
+  "sqlite": "solo memoria, nessun D1 remoto",
+  "pose_svg": "299/299",
+  "pose_3d": "299/299",
+  "browser_produzione": "non verificato da questo workflow"
+}

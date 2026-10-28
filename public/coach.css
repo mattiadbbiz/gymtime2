@@ -151,3 +151,25 @@ input[type="search"]{margin-bottom:4px}
 /* Impostazioni della sezione mobilità */
 .mob-imp{margin-top:4px}
 .mob-imp .tag{flex:none}
+
+/* Superserie: blocco con giri, recupero e pause tra gli esercizi */
+.ss-blocco{border:1px solid var(--gold);border-radius:18px;padding:10px;background:rgba(214,178,94,.08);display:grid;gap:10px;min-width:0}
+.ss-testa{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ss-testa b{font-family:"Barlow Condensed",sans-serif;font-size:19px;color:var(--primary)}
+.ss-lista{gap:0}
+.ss-lista .es-card.in-gruppo{border-left-width:1px}
+.ss-pausa{display:flex;justify-content:center;padding:6px 0;position:relative}
+.ss-pausa::before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px dashed var(--gold)}
+.ss-pausa label{position:relative;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 6px 4px 12px;font-size:13px;flex-wrap:wrap;justify-content:center;text-align:center;font-weight:600;color:var(--ink-2);max-width:100%}
+.ss-pausa-in{display:flex;align-items:center;gap:4px;flex:none}
+.ss-pausa input{width:64px;min-height:34px;padding:0 8px;text-align:center}
+.ss-piu{justify-self:start}
+
+/* Varianti dell'omino nella carta dell'esercizio */
+.var-box{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:10px;min-width:0}
+.var-anteprima{width:96px;flex:none;aspect-ratio:1;border-radius:12px}
+.var-scelte{display:grid;gap:8px;min-width:0;flex:1}
+.var-riga .lbl{margin-bottom:3px}
+.var-riga .chips{flex-wrap:wrap}
+.var-t{display:block;color:var(--ink-2)}
+@media (max-width:420px){.var-box{flex-direction:column;align-items:center}.var-scelte{width:100%}}

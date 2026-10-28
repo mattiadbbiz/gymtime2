@@ -120,7 +120,7 @@ const SCHEMA = {
       esercizi: { type: 'array', items: { type: 'object', properties: {
         nome: { type: 'string' }, modalita: { type: 'string', enum: Object.keys(MODALITA) },
         serie: { type: 'number' }, rip: { type: 'string' }, carico: { type: 'number' }, minuti: { type: 'number' },
-        secondi: { type: 'number' }, rec: { type: 'number' }, da: { type: 'number' }, a: { type: 'number' }, passo: { type: 'number' },
+        secondi: { type: 'number' }, metri: { type: 'number' }, calorie: { type: 'number' }, rec: { type: 'number' }, da: { type: 'number' }, a: { type: 'number' }, passo: { type: 'number' },
         tempo: { type: 'string' }, gruppo: { type: 'string' }, nota: { type: 'string' }
       }, required: ['nome', 'modalita'] } }
     }, required: ['nome', 'esercizi'] } }
@@ -132,7 +132,7 @@ function istruzioni(nomi) {
   return `Sei l'assistente di un coach italiano. Trasforma il testo in una scheda di allenamento in JSON.
 Regole:
 - Dividi per giorni ("Giorno 1", "Giorno 2"...). Se non ci sono giorni, usa un solo "Giorno 1".
-- modalita: setrep (serie × ripetizioni), emom (minuti, rip al minuto), amrap (minuti; il contenuto del circuito va in nota), tempo (tenuta: serie e secondi), rt (ripetizioni totali, eventuale tempo limite in minuti), ladder (scala: da, a, passo), free (tutto il resto, descrizione in nota).
+- modalita: setrep (serie × ripetizioni), emom (minuti, rip al minuto), amrap (minuti; il contenuto del circuito va in nota), tempo (tenuta: serie e secondi), rt (ripetizioni totali, eventuale tempo limite in minuti), ladder (scala: da, a, passo), cardio (macchine cardio, corde, slitta, farmer: serie, metri o calorie, secondi per il tempo, carico, rec), free (tutto il resto, descrizione in nota).
 - rip è una stringa: "8" oppure un intervallo "8-10". carico in kg, rec in secondi.
 - tempo esecutivo nel formato "3-1-1-0" (eccentrica-fermo-concentrica-fermo; X = esplosivo) solo se scritto nel testo.
 - gruppo: stessa lettera (A, B...) per esercizi in superserie o circuito, altrimenti vuoto.

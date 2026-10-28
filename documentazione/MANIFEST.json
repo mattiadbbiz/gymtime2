@@ -15,9 +15,19 @@
     "sha256": "c4428a40739ab35144fe08ab3d277d8fc410fb0585c59ef99c811e7c9c68e20b"
   },
   {
+    "path": "documentazione/VERIFICHE-CORREZIONE-PERCORSI.json",
+    "bytes": 568,
+    "sha256": "6cdf74ba9ebd51f719b395db9b6bd25bb2803aee1057c8551e51b6936c7fe9ba"
+  },
+  {
     "path": "documentazione/VERIFICHE.json",
     "bytes": 2177,
     "sha256": "e7aa8cffd60f620d11ceb9952847cf599795737b1dfe27a6ecb0ac2ac256e049"
+  },
+  {
+    "path": "documentazione/legacy/0003_libreria.sql",
+    "bytes": 75061,
+    "sha256": "705143d57f412b946d3e93e60a278f01753cac2a3de3b2775d2339b1ba4657b2"
   },
   {
     "path": "migrations/0001_init.sql",
@@ -65,9 +75,19 @@
     "sha256": "f186876941ade0a48f7005596a263fbbb5a5cb9a14db0385f5b13a6c43b5344e"
   },
   {
+    "path": "package-lock.json",
+    "bytes": 50088,
+    "sha256": "5f41dbcb8deec238f611d351df03ec3d0337408e768809100d276116593d0af0"
+  },
+  {
     "path": "package.json",
     "bytes": 284,
     "sha256": "8c3c5960609699be406fbadf6127d7f0a31076f9d1ba7d1bde6eec17031a9eee"
+  },
+  {
+    "path": "public/app.js",
+    "bytes": 8717,
+    "sha256": "5d00b765393eb21dc2e55c06fcdceef08db63c108ee859b5446731e61ecf7b84"
   },
   {
     "path": "public/apple-touch-icon.jpg",
@@ -215,6 +235,11 @@
     "sha256": "0185133f3078a372cab67da44612e0f9b8100225a5b5d4e2650822d070afc120"
   },
   {
+    "path": "public/libreria.js",
+    "bytes": 7569,
+    "sha256": "2aa6e5ab44df71fa2a5f8e50543702baf39ff2005c4d75efa2d0bb010f4c4dd4"
+  },
+  {
     "path": "public/manifest.webmanifest",
     "bytes": 643,
     "sha256": "b05ca58446f743898cf6896823455a3b5bbd94e738392d3784a790f01212c4c6"
@@ -301,7 +326,7 @@
   },
   {
     "path": "wrangler.toml",
-    "bytes": 655,
-    "sha256": "b166722072e85511cdc7ad8b7e74b3e749eea52f6fd5645f1f440cad1a07e964"
+    "bytes": 656,
+    "sha256": "7b15d079a1bdc4ebec8cc1669f394914aa6bd83e954046c32a0494b1ba60a903"
   }
 ]

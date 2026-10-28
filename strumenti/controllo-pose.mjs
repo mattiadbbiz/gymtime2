@@ -43,17 +43,19 @@ export function controlla(nome) {
     for (const i of [1, 2]) {
       const gin = deg(flessione(J['r' + i], [J['k' + i], J['a' + i]], true));
       const gom = deg(flessione(J['s' + i], [J['e' + i], J['w' + i]], false));
+      // Braccio "libero" (gomiti larghi sotto il bilanciere): esce dal piano del profilo, di lato gomito e spalla non si misurano
+      const libero = [kA, kB].some(k => (Array.isArray(k.arms) ? k.arms[i - 1] : k.arms)?.libero);
       if (lato) {
-        segna('ginocchio', gin); segna('gomito', gom);
+        segna('ginocchio', gin); if (!libero) segna('gomito', gom);
         const an = giunti(angoliDi(J['r' + i], J['k' + i], J['a' + i]), J.t, true)[0];
         const sp = giunti(angoliDi(J['s' + i], J['e' + i], J['w' + i]), J.t, false)[0];
-        segna('anca', an); segna('spalla', sp);
+        segna('anca', an); if (!libero) segna('spalla', sp);
         if (gin < LIMITI.ginocchio[0]) problemi.add(`ginocchio ${i} in iperestensione (${gin.toFixed(0)}°)`);
         if (gin > LIMITI.ginocchio[1]) problemi.add(`ginocchio ${i} piegato oltre il possibile (${gin.toFixed(0)}°)`);
-        if (gom < LIMITI.gomito[0]) problemi.add(`gomito ${i} in iperestensione (${gom.toFixed(0)}°)`);
-        if (gom > LIMITI.gomito[1]) problemi.add(`gomito ${i} piegato oltre il possibile (${gom.toFixed(0)}°)`);
+        if (!libero && gom < LIMITI.gomito[0]) problemi.add(`gomito ${i} in iperestensione (${gom.toFixed(0)}°)`);
+        if (!libero && gom > LIMITI.gomito[1]) problemi.add(`gomito ${i} piegato oltre il possibile (${gom.toFixed(0)}°)`);
         if (an < LIMITI.anca[0] || an > LIMITI.anca[1]) problemi.add(`anca ${i} fuori dai gradi possibili (${an.toFixed(0)}°)`);
-        if (sp < LIMITI.spalla[0] || sp > LIMITI.spalla[1]) problemi.add(`spalla ${i} fuori dai gradi possibili (${sp.toFixed(0)}°)`);
+        if (!libero && (sp < LIMITI.spalla[0] || sp > LIMITI.spalla[1])) problemi.add(`spalla ${i} fuori dai gradi possibili (${sp.toFixed(0)}°)`);
       } else {
         if (Math.abs(gin) > LIMITI.ginocchio[1]) problemi.add(`ginocchio ${i} piegato oltre il possibile`);
         if (Math.abs(gom) > LIMITI.gomito[1]) problemi.add(`gomito ${i} piegato oltre il possibile`);

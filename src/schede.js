@@ -2,7 +2,7 @@
 // Storico: alle schede archiviate dall'app si aggiungono quelle fatte prima di GymTime (origine 'importata'),
 // che restano sempre archiviate. Il materiale usato per importarle non si salva.
 import { json, corpo, fallisci, testo, intero, parseJSON, richiedi, gestibile, leggibile, oggi } from './util.js';
-import { MODALITA, pulisciParametri, lunedi, settimanaDi } from '../public/js/regole.js';
+import { MODALITA, pulisciParametri, pulisciVariante, lunedi, settimanaDi } from '../public/js/regole.js';
 
 // Periodo da mostrare. Per le schede dell'app create prima della migrazione 0004, o con il periodo
 // mancante, si ricava da inizio, creazione e archiviazione. Le importate mostrano solo quello scritto dal coach.
@@ -26,7 +26,7 @@ export async function caricaScheda(env, filtro, valore) {
   for (const e of esercizi.results) {
     perGiorno.get(e.giorno_id)?.esercizi.push({
       id: e.id, esercizio_id: e.esercizio_id, nome: e.nome, modalita: e.modalita, gruppo: e.gruppo,
-      parametri: parseJSON(e.parametri, {}), tecnica: parseJSON(e.tecnica), nota: e.nota,
+      parametri: parseJSON(e.parametri, {}), tecnica: parseJSON(e.tecnica), nota: e.nota, variante: parseJSON(e.variante),
       progressione: parseJSON(e.progressione), animazione: e.animazione || 'free', inizia_con: e.inizia_con || 'conc',
       acc_libreria: e.acc_libreria || '', muscolo: e.muscolo || '', attrezzo: e.attrezzo || ''
     });
@@ -90,6 +90,7 @@ function valida(d) {
         tecnica: tempo ? { tempo } : null,
         nota: testo(e.nota, 600) || null,
         gruppo: testo(e.gruppo, 4).toUpperCase() || null,
+        variante: pulisciVariante(e.variante),
         progressione
       };
     });
@@ -114,10 +115,11 @@ function righeGiorni(env, s, SCHEDA, arg) {
     st.push(env.DB.prepare(`INSERT INTO giorni_scheda (scheda_id, posizione, nome) VALUES (${SCHEDA}, ?, ?)`).bind(arg, i, g.nome));
     g.esercizi.forEach((e, j) => {
       st.push(env.DB.prepare(
-        `INSERT INTO esercizi_scheda (giorno_id, posizione, gruppo, esercizio_id, nome, modalita, parametri, tecnica, nota, progressione)
-         VALUES ((SELECT id FROM giorni_scheda WHERE scheda_id = ${SCHEDA} AND posizione = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO esercizi_scheda (giorno_id, posizione, gruppo, esercizio_id, nome, modalita, parametri, tecnica, nota, progressione, variante)
+         VALUES ((SELECT id FROM giorni_scheda WHERE scheda_id = ${SCHEDA} AND posizione = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(arg, i, j, e.gruppo, e.esercizio_id, e.nome, e.modalita, JSON.stringify(e.parametri),
-        e.tecnica ? JSON.stringify(e.tecnica) : null, e.nota, e.progressione ? JSON.stringify(e.progressione) : null));
+        e.tecnica ? JSON.stringify(e.tecnica) : null, e.nota, e.progressione ? JSON.stringify(e.progressione) : null,
+        e.variante ? JSON.stringify(e.variante) : null));
     });
   });
   return st;

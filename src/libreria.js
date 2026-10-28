@@ -7,13 +7,13 @@ import { POSE } from '../public/js/omino.js';
 const CAMPI = ['nome', 'famiglia', 'variante', 'categoria', 'muscolo', 'attrezzo', 'animazione', 'inizia_con', 'modalita_default', 'altri_nomi', 'accorgimenti'];
 
 export async function elencoLibreria(env, io) {
-  richiedi(io, 'admin', 'coach');
+  richiedi(io, 'admin', 'coach', 'atleta');
   const { results } = await env.DB.prepare(
     `SELECT id, nome, famiglia, variante, categoria, muscolo, attrezzo, animazione, inizia_con, modalita_default, altri_nomi, accorgimenti, creato_da
        FROM libreria_esercizi
       WHERE creato_da IS NULL OR creato_da = ?1 OR ?2 = 'admin'
       ORDER BY nome COLLATE NOCASE`
-  ).bind(io.id, io.ruolo).all();
+  ).bind(io.ruolo === 'atleta' ? (io.coach_id ?? -1) : io.id, io.ruolo).all();
   return json({ esercizi: results });
 }
 

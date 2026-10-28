@@ -1,40 +1,50 @@
-# GymTime
+# GymTime - progetto unificato
 
-Diario di allenamento per coach e atleti. Cloudflare Workers (API + file statici), D1 (database `gymtime`), Workers AI (import da file, foto e voce).
+Archivio completo dei sorgenti, non una patch. Non eseguire gli applicatori dei vecchi zip.
+Base: struttura di mattiadbbiz/gymtime2 (snapshot main 3e6a5b6f8f9f6d7a0da812baa69edf126f444e78), file aggiornati allegati nella conversazione e modifiche approvate.
+Le versioni aggiornate degli allegati prevalgono sui moduli più vecchi del repository.
 
-## Struttura
-- `src/` · Worker: accesso, profili, libreria, schede (con storico e schede importate), allenamento, domande, importazione (testo, voce, file, foto), mobilità
-- `public/` · sito: `index.html`, `stile.css`, `atleta.css`, `coach.css`, `js/` (app, atleta, coach, storico-schede, mobilita, mobilita-sessione, mobilita-libreria, omino, regole)
-- `migrations/` · schema del database e libreria di 134 esercizi
-  - 0004 · storico schede: schede importate dal passato (origine, periodo dal/al, nota)
-  - 0005 · mobilità e stretching: libreria, impostazioni per coach, sessioni svolte
-  - 0006 · libreria di mobilità e stretching: 35 esercizi, ognuno con il suo omino
-- `wrangler.toml` · configurazione (D1, Workers AI, limite tentativi di accesso)
+## Avvio locale
+Da una nuova cartella estratta, non sovrascrivere il vecchio repository senza un backup:
+```sh
+cd gymtime2
+npm install
+mkdir -p public/js/vendor
+curl -fL https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js -o public/js/vendor/three.min.js
+node strumenti/controllo-pose.mjs
+node strumenti/controllo-3d.mjs
+npx wrangler d1 migrations apply gymtime --local --config wrangler.toml
+npx wrangler dev --config wrangler.toml
+```
+La copia locale di three.min.js non è inclusa, come concordato. Il renderer esistente mantiene il fallback SVG.
+Non sono inclusi account, credenziali, database, .dev.vars, .wrangler, node_modules o dati di esempio.
+Su database locale nuovo, dopo le migrazioni, eseguire `bash strumenti/crea-admin-locale.sh`. Chiede username e password locale senza mostrarla e crea un admin SOLO se la tabella utenti è vuota. Non usare una password reale o riutilizzata altrove. Le migrazioni non importano gli utenti dal remoto.
 
-## Pubblicazione
-Il repository è collegato a Cloudflare: ogni commit su GitHub ripubblica il Worker.
-Le migrazioni del database non partono da sole: il commit pubblica il codice, ma le tabelle si cambiano a mano con
-`npx wrangler d1 migrations apply gymtime --remote`. Wrangler applica solo quelle che mancano: `npx wrangler d1 migrations list gymtime --remote` mostra quali sono in attesa.
-Prima di ogni migrazione fai un backup: `npx wrangler d1 export gymtime --remote --output=backup-gymtime.sql`.
+## Incluso
+- Navigazione atleta Esercizi / Allenamento / Profilo e guida per ruolo, automatica al primo ingresso per dispositivo.
+- Home basata sui dati reali: Visiona, Allenati, Mobilità, Stretching, Cardio.
+- Visiona settimana corrente, stampa PDF e condivisione testo/TXT.
+- Libreria atleta in sola lettura: esercizi comuni e del proprio coach. Impara con 3D/SVG, accorgimenti reali e ultime cinque esecuzioni per ID.
+- Sessioni Mobilità/Stretching separate e full body. La durata scelta è un obiettivo; l'anteprima mostra la stima reale.
+- Cardio con esercizi selezionati, data fissata all'avvio, bozza, completamento, durata e metri/calorie facoltativi.
+- Profilo con storico allenamenti, schede passate, cambio password e preferenza grafica locale.
+- Recuperi +-15 s, pausa facoltativa tra esercizi normali = recupero prescritto +60 s. Nessun minuto aggiuntivo per superserie o dopo l'ultimo esercizio.
+- Flussi coach/admin, serie parziali, superserie, varianti e conteggio preesistenti mantenuti.
+- Reset password del coach già esistente, senza email; nessun nuovo dato personale.
 
-Controllo rapido: `/api/salute` deve rispondere `{"ok":true,"tabelle":13,"ai":true}`.
+## Migrazioni e produzione
+Le migrazioni 0001-0008 allegate sono mantenute nei loro nomi originali. La nuova 0009 aggiunge tipo_sessione (default mista per sessioni precedenti) e sessioni_cardio.
+La vecchia migrazione di solo popolamento 0003_libreria.sql presente su GitHub non viene duplicata: la libreria aggiornata è già nella 0003_settimane_libreria.sql fornita dall'utente. Non cancellare o riscrivere migrazioni remote già registrate.
+Prima di qualsiasi rilascio: confrontare l'elenco D1 remoto, fare un backup e applicare SOLO quelle mancanti, poi deploy manuale. Nessuna di queste operazioni è stata eseguita qui.
+Il README originale è conservato in documentazione/README-originale.md e contiene indicazioni di pubblicazione precedenti: per questo lavoro fa fede la procedura di deploy manuale concordata.
 
-## Ruoli
-- **Admin**: crea coach e atleti, gestisce la libreria di base e le domande predefinite. Accesso con il tasto Admin.
-- **Coach**: crea i suoi atleti, scrive o importa le schede, legge lo storico, sblocca le giornate.
-- **Atleta**: si allena con la scheda del giorno e consulta il suo storico.
+## Limiti
+Nessun service worker o allenamento completamente offline. Il flusso locale di serie/recuperi non sostituisce la sincronizzazione futura.
+Le conferme di uscita coprono i link interni e il browser gestisce chiusura/ricarica; Indietro del browser non è bloccato.
+Lo storico conserva il limite di 400 record per tipo del progetto originale; nessuna paginazione aggiunta.
+Il dettaglio Impara non associa per nome gli elementi storici senza ID.
+public/prova-omini.html e i vecchi file frontend non referenziati public/app.js e public/libreria.js non sono inclusi: l'entrypoint reale è public/js/app.js.
+Le icone PNG richieste dal manifest sono generate dalle immagini JPG fornite dall'utente.
 
-Le password sono libere e salvate cifrate (PBKDF2). Dei ragazzi si salvano solo nome, username e dati di allenamento. File, foto, audio e testi usati per importare una scheda non si salvano: servono solo a crearla.
-
-## Controllo anatomico delle pose
-Ogni posa nuova dell'omino deve passare il controllo: `node strumenti/controllo-pose.mjs` (tutte) oppure `node strumenti/controllo-pose.mjs mob_farfalla` (solo alcune).
-Controlla gomiti e ginocchia (mai in iperestensione, mai oltre il possibile), spalle e anche entro i gradi possibili, mani e piedi sugli appoggi, nessuna parte sotto il pavimento.
-
-## Mobilità e stretching
-Terzo tasto in home per atleti, coach e admin. Il coach (o l'admin) la accende o la spegne per i suoi atleti e sceglie le durate in Libreria → Mobilità (da 5 a 30 minuti).
-Il generatore è in `public/js/mobilita.js` e gira nel telefono: rigenerare non scrive nel database, la sessione si salva da Avvia.
-- Fasi: riscaldamento in piedi (circa un terzo), mobilità specifica (circa un quinto), statico, respirazione finale da 60 s.
-- Area facoltativa: collo spalle e braccia, schiena, anche e glutei, gambe e caviglie.
-- Niente doppioni, mai due zone uguali di fila (tranne nell'area scelta), da 10 minuti ogni area sia nella mobilità sia negli statici, al massimo due volte giù a terra.
-- Statici a 2 serie da 15 minuti, mai oltre 60 s per lato; una ripetizione dura quanto un ciclo dell'omino (minimo 1,5 s).
-- Durata entro ±8% di quella scelta (almeno 30 s, al massimo 90 s).
+## Ripartenza in nuova chat
+Caricare questo zip e chiedere di leggere README.md e documentazione/VERIFICHE.json. Non ricostruire il progetto applicando di nuovo vecchie patch. Rispettare il deploy manuale e chiedere conferma prima di modificare database o flussi.

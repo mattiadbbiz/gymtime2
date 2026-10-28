@@ -1,8 +1,9 @@
 // GymTime · schermate di coach e admin
 import { api, esc, iniziale, dataCorta, RUOLI } from './api.js';
 import { stato, app, rotta, pagina, attesa, toast, chiedi, finestra, vai } from './ui.js';
-import { montaOmino, ominoSVG, ANIMAZIONI, animazione, POSE } from './omino.js';
-import { MODALITA, CAMPI, CAMPI_PROG, etichetta, rxTesto, valoriSettimana, lunedi, norm } from './regole.js';
+import { montaOmino, ominoSVG, ANIMAZIONI, animazione, animazioneVariante, VARIANTI_OMINO, POSE } from './omino.js';
+import { montaOmino3D } from './omino3d.js';
+import { MODALITA, CAMPI, CAMPI_PROG, etichetta, rxTesto, valoriSettimana, lunedi, norm, pulisciVariante, testoVariante } from './regole.js';
 import { campoPeriodo, leggiPeriodo, controllaPeriodo, partiPeriodo, sceltePeriodo, fotoPerInvio } from './storico-schede.js';
 import { sceltaLibreria } from './mobilita-libreria.js';
 
@@ -16,7 +17,7 @@ const oggiISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome'
 const clona = o => JSON.parse(JSON.stringify(o));
 const numero = v => { const s = String(v ?? '').trim().replace(',', '.'); if (!s) return null; const n = Number(s); return Number.isFinite(n) && n >= 0 ? n : null; };
 const valoreCampo = (c, raw) => (c === 'rip' && /^\s*\d+\s*[-–]\s*\d+\s*$/.test(raw)) ? raw.replace(/\s/g, '').replace('–', '-') : (c === 'testo' ? raw : numero(raw));
-const PREDEFINITI = { setrep: { serie: 3, rip: 10 }, emom: { minuti: 10, rip: 5 }, amrap: { minuti: 10 }, tempo: { serie: 3, secondi: 30 }, rt: { rip: 50 }, ladder: { da: 1, a: 5, passo: 1 }, free: { testo: '' } };
+const PREDEFINITI = { setrep: { serie: 3, rip: 10 }, emom: { minuti: 10, rip: 5 }, amrap: { minuti: 10 }, tempo: { serie: 3, secondi: 30 }, cardio: { serie: 1, secondi: 600 }, rt: { rip: 50 }, ladder: { da: 1, a: 5, passo: 1 }, free: { testo: '' } };
 
 // Libreria in memoria per editor e scelte
 let LIB = null;
@@ -223,8 +224,74 @@ const bozze = {};          // schede importate in attesa di controllo, per atlet
 const E = { atleta: null };
 const nuovoEsercizio = (x, modalita) => {
   const m = modalita || (x && MODALITA[x.modalita_default] ? x.modalita_default : 'setrep');
-  return { esercizio_id: x ? x.id : null, nome: x ? x.nome : 'Esercizio', modalita: m, parametri: clona(PREDEFINITI[m]), tecnica: null, nota: '', gruppo: null, progressione: null, animazione: x ? x.animazione : 'free', aperto: true };
+  return { esercizio_id: x ? x.id : null, nome: x ? x.nome : 'Esercizio', modalita: m, parametri: clona(PREDEFINITI[m]), tecnica: null, nota: '', gruppo: null, progressione: null,
+    animazione: x ? x.animazione : 'free', variante: variantePredefinita(x), aperto: true };
 };
+
+/* Varianti dell'omino: attrezzo, gradi della panca, rialzi di mani e piedi */
+const variantiDi = e => VARIANTI_OMINO[animazione(e.animazione)] || null;
+const posaDi = e => animazioneVariante(e.animazione, e.variante);
+const maiuscola = t => t[0].toUpperCase() + t.slice(1);
+// Dal campo attrezzo della libreria: "Manubri, panca" → manubri
+function variantePredefinita(x) {
+  const v = x && VARIANTI_OMINO[animazione(x.animazione)];
+  if (!v?.attrezzi) return null;
+  const a = norm(x.attrezzo);
+  const att = /cav/.test(a) ? 'cavi' : /bilanc|\bez\b|t bar|multipower/.test(a) ? 'bilanciere' : /manub|kettlebell/.test(a) ? 'manubri' : null;
+  return att && v.attrezzi.includes(att) ? { attrezzo: att } : null;
+}
+
+/* Superserie: esercizi vicini con lo stesso gruppo.
+   Giri = serie (uguali per tutti), recupero dopo il giro = rec dell'ultimo, pausa prima del successivo = parametri.pausa */
+const SS_MODALITA = ['setrep', 'tempo', 'cardio'];
+function blocchi(es) {
+  const out = [];
+  es.forEach((e, i) => {
+    if (e.gruppo && i > 0 && es[i - 1].gruppo === e.gruppo) out[out.length - 1].fine = i;
+    else out.push({ inizio: i, fine: i, gruppo: e.gruppo || null });
+  });
+  return out;
+}
+const bloccoDi = (es, i) => blocchi(es).find(b => i >= b.inizio && i <= b.fine);
+function inSuperserie(e) {
+  if (SS_MODALITA.includes(e.modalita)) return;
+  const p = clona(PREDEFINITI.setrep);
+  for (const c of ['rip', 'carico']) if (e.parametri[c] !== undefined) p[c] = e.parametri[c];
+  Object.assign(e, { modalita: 'setrep', parametri: p, progressione: null });
+}
+// Lettere A, B, C… in ordine, gruppi da un solo esercizio sciolti, giri e recupero allineati
+function normalizzaGruppi(g) {
+  let n = 0;
+  for (const b of blocchi(g.esercizi)) {
+    if (!b.gruppo) { delete g.esercizi[b.inizio].parametri.pausa; continue; }
+    const membri = g.esercizi.slice(b.inizio, b.fine + 1);
+    if (membri.length < 2) { membri[0].gruppo = null; delete membri[0].parametri.pausa; continue; }
+    const lettera = String.fromCharCode(65 + n++);
+    membri.forEach(inSuperserie);
+    const giri = membri[0].parametri.serie ?? 3;
+    const rec = membri.map(e => e.parametri.rec).filter(v => v !== undefined).pop();
+    membri.forEach((e, k) => {
+      e.gruppo = lettera;
+      e.parametri.serie = giri;
+      if (k < membri.length - 1) delete e.parametri.rec;
+      else { delete e.parametri.pausa; if (rec !== undefined) e.parametri.rec = rec; }
+    });
+  }
+}
+function sciogliGruppo(g, b) {
+  const membri = g.esercizi.slice(b.inizio, b.fine + 1);
+  const rec = membri[membri.length - 1].parametri.rec;
+  membri.forEach(e => { e.gruppo = null; delete e.parametri.pausa; if (rec !== undefined) e.parametri.rec = rec; });
+}
+// Esercizio da aggiungere in una superserie, subito dopo la posizione dopo
+function aggiungiInGruppo(g, dopo, x) {
+  const e = nuovoEsercizio(x);
+  inSuperserie(e);
+  e.gruppo = g.esercizi[dopo].gruppo;
+  g.esercizi.forEach(y => { y.aperto = false; });
+  g.esercizi.splice(dopo + 1, 0, e);
+  normalizzaGruppi(g);
+}
 
 window.addEventListener('beforeunload', ev => { if (E.sporco && (location.hash.startsWith('#/scheda/') || location.hash.startsWith('#/storico-scheda/'))) { ev.preventDefault(); ev.returnValue = ''; } });
 
@@ -240,10 +307,11 @@ rotta(/^\/scheda\/(\d+)$/, async id => {
   } else if (sch.scheda) {
     s = { nome: sch.scheda.nome, settimane: sch.scheda.settimane, inizio: sch.scheda.inizio || lunedi(String(sch.scheda.creata_il).slice(0, 10)), scarico: sch.scheda.scarico || [],
       giorni: sch.scheda.giorni.map(g => ({ nome: g.nome, esercizi: g.esercizi.map(x => ({ esercizio_id: x.esercizio_id, nome: x.nome, modalita: x.modalita, parametri: x.parametri, tecnica: x.tecnica,
-        nota: x.nota || '', gruppo: x.gruppo, progressione: x.progressione, animazione: x.animazione, aperto: false })) })) };
+        nota: x.nota || '', gruppo: x.gruppo, progressione: x.progressione, animazione: x.animazione, variante: x.variante || null, aperto: false })) })) };
   } else {
     s = { nome: 'Scheda', settimane: 1, inizio: lunedi(oggiISO()), scarico: [], giorni: [{ nome: 'Giorno 1', esercizi: [] }] };
   }
+  s.giorni.forEach(normalizzaGruppi);
   Object.assign(E, { atleta: id, nomeAtleta: sch.atleta.nome, esiste: !!sch.scheda, scheda: s, giorno: 0, sporco: !!bozza, bozza: bozza || null, storico: false, storicoId: null });
   delete bozze[id];
   disegnaEditor();
@@ -252,7 +320,7 @@ rotta(/^\/scheda\/(\d+)$/, async id => {
 // Editor di una scheda vecchia per lo storico: nuova (da un'importazione) o importata da correggere.
 // Non diventa mai la scheda attiva.
 const esercizioEditor = x => ({ esercizio_id: x.esercizio_id, nome: x.nome, modalita: x.modalita, parametri: x.parametri, tecnica: x.tecnica,
-  nota: x.nota || '', gruppo: x.gruppo, progressione: x.progressione, animazione: x.animazione || libPerId(x.esercizio_id)?.animazione || 'free', aperto: false });
+  nota: x.nota || '', gruppo: x.gruppo, progressione: x.progressione, animazione: x.animazione || libPerId(x.esercizio_id)?.animazione || 'free', variante: x.variante || null, aperto: false });
 rotta(/^\/storico-scheda\/(\d+)\/(nuova|\d+)$/, async (id, sid) => {
   id = Number(id);
   const indietro = `#/storico/${id}/schede`;
@@ -272,6 +340,7 @@ rotta(/^\/storico-scheda\/(\d+)\/(nuova|\d+)$/, async (id, sid) => {
       giorni: scheda.giorni.map(g => ({ nome: g.nome, esercizi: g.esercizi.map(esercizioEditor) })) };
   }
   s.pp = { dal: partiPeriodo(s.periodo_dal), al: partiPeriodo(s.periodo_al) };
+  s.giorni.forEach(normalizzaGruppi);
   Object.assign(E, { atleta: id, nomeAtleta: sch.atleta.nome, esiste: false, scheda: s, giorno: 0, sporco: !!bozza, bozza, storico: true, storicoId });
   delete bozze[`s${id}`];
   disegnaEditor();
@@ -314,7 +383,7 @@ function htmlGiorno() {
       <button type="button" class="btn sm" data-act="giorno-dx" ${E.giorno === E.scheda.giorni.length - 1 ? 'disabled' : ''} aria-label="Sposta a destra">›</button>
       <button type="button" class="btn sm" data-act="giorno-copia" aria-label="Duplica giorno">${COPIA}</button>
       <button type="button" class="btn sm danger" data-act="giorno-elimina" aria-label="Elimina giorno" ${E.scheda.giorni.length === 1 ? 'disabled' : ''}>${CESTINO}</button></div></div>
-    <ol class="es-lista">${g.esercizi.map((e, i) => htmlEsercizio(e, i)).join('')}</ol>
+    <ol class="es-lista">${blocchi(g.esercizi).map(b => b.gruppo ? htmlSuperserie(g, b) : htmlEsercizio(g.esercizi[b.inizio], b.inizio)).join('')}</ol>
     ${g.esercizi.length ? '' : '<div class="empty">Nessun esercizio in questo giorno. Aggiungine uno dalla libreria.</div>'}
     <button type="button" class="btn big aggiungi" data-act="aggiungi">${PIU} Aggiungi esercizio</button>`;
 }
@@ -328,27 +397,72 @@ function riassuntoProg(e) {
   return diff.length ? `<p class="small prog-r">Progressione: ${esc(diff.join(', '))}</p>` : '';
 }
 
-function htmlEsercizio(e, i) {
+// Blocco superserie: giri e recupero in comune, pause tra un esercizio e il successivo
+function htmlSuperserie(g, b) {
+  const membri = g.esercizi.slice(b.inizio, b.fine + 1), ultimo = membri[membri.length - 1];
+  const tutti = blocchi(g.esercizi), k = tutti.indexOf(tutti.find(x => x.inizio === b.inizio));
+  return `<li class="ss-blocco" data-blocco="${b.inizio}">
+    <div class="ss-testa"><b>Superserie ${esc(b.gruppo)}</b><span class="small muted">${membri.length} esercizi di fila</span><span class="grow"></span>
+      <button type="button" class="btn sm" data-act="ss-su" data-i="${b.inizio}" ${k === 0 ? 'disabled' : ''} aria-label="Sposta la superserie su">${SU}</button>
+      <button type="button" class="btn sm" data-act="ss-giu" data-i="${b.inizio}" ${k === tutti.length - 1 ? 'disabled' : ''} aria-label="Sposta la superserie giù">${GIU}</button>
+      <button type="button" class="btn sm" data-act="ss-sciogli" data-i="${b.inizio}">Sciogli</button></div>
+    <div class="two ss-campi"><label>Giri<input data-ss="serie" data-i="${b.inizio}" inputmode="decimal" value="${esc(membri[0].parametri.serie ?? '')}"></label>
+      <label>Recupero dopo il giro (s)<input data-ss="rec" data-i="${b.inizio}" inputmode="decimal" value="${esc(ultimo.parametri.rec ?? '')}" placeholder="0"></label></div>
+    <ol class="es-lista ss-lista">${membri.map((e, k) => {
+      const i = b.inizio + k, dopo = membri[k + 1];
+      return htmlEsercizio(e, i, { ss: b, n: k + 1 }) + (dopo ? `<li class="ss-pausa"><label>Pausa prima di ${esc(dopo.nome)}
+        <span class="ss-pausa-in"><input data-f="pausa" data-i="${i}" inputmode="decimal" value="${esc(e.parametri.pausa ?? '')}" placeholder="0"> s</span></label></li>` : '');
+    }).join('')}</ol>
+    <button type="button" class="btn sm ss-piu" data-act="ss-aggiungi" data-i="${b.fine}">${PIU} Aggiungi esercizio alla superserie</button>
+  </li>`;
+}
+
+// Scelte dell'omino per l'esercizio, solo se la posa ha varianti
+function htmlVariante(e, i) {
+  const v = variantiDi(e);
+  if (!v) return '';
+  const cur = e.variante || {};
+  const chip = (campo, val, testo) => `<button type="button" class="chip sm" data-var="${campo}" data-val="${esc(val ?? '')}" data-i="${i}" aria-pressed="${String(cur[campo] ?? '') === String(val ?? '')}">${esc(testo)}</button>`;
+  const riga = (titolo, chips) => `<div class="var-riga"><span class="lbl">${titolo}</span><div class="chips">${chips.join('')}</div></div>`;
+  const gradi = v.gradi?.[cur.attrezzo || v.attrezzi?.[0]] || [];
+  return `<div class="var-box"><div class="var-anteprima stage" data-anteprima="${i}"></div><div class="var-scelte">
+    ${v.attrezzi ? riga('Attrezzo', [chip('attrezzo', null, 'Come in libreria'), ...v.attrezzi.map(a => chip('attrezzo', a, maiuscola(a)))]) : ''}
+    ${gradi.length ? riga('Panca', [chip('panca', null, v.pancaSempre ? 'Come in libreria' : 'Senza panca'), ...gradi.map(d => chip('panca', d, `${d}°`))]) : ''}
+    ${v.mani ? riga('Mani', [chip('mani', null, 'A terra'), ...v.mani.map(m => chip('mani', m, maiuscola(m)))]) : ''}
+    ${v.piedi ? riga('Piedi', [chip('piedi', null, 'A terra'), ...v.piedi.map(m => chip('piedi', m, maiuscola(m)))]) : ''}
+  </div></div>`;
+}
+function montaAnteprime() {
+  app.querySelectorAll('[data-anteprima]').forEach(el => { const e = giornoCorrente().esercizi[Number(el.dataset.anteprima)]; if (e) montaOmino(el, posaDi(e), { forza: true }); });
+}
+
+function htmlEsercizio(e, i, opz = {}) {
   const g = E.scheda.giorni[E.giorno];
   const nonInLib = !e.esercizio_id;
+  const ss = opz.ss;
+  const primo = ss ? i === ss.inizio : i === 0, ultimo = ss ? i === ss.fine : i === g.esercizi.length - 1;
+  const modalita = ss ? Object.entries(MODALITA).filter(([k]) => SS_MODALITA.includes(k)) : Object.entries(MODALITA);
+  const campi = CAMPI[e.modalita].filter(c => !ss || (c !== 'serie' && c !== 'rec'));
+  const vt = testoVariante(e.variante);
   return `<li class="es-card${e.aperto ? ' aperto' : ''}${e.gruppo ? ' in-gruppo' : ''}" data-i="${i}">
     <button type="button" class="es-testa" data-act="apri" data-i="${i}" aria-expanded="${!!e.aperto}">
-      <span class="mini">${ominoSVG(e.animazione)}</span>
-      <span class="es-t"><b>${esc(e.nome)}${e.gruppo ? ` <span class="tag gold">${esc(e.gruppo)}</span>` : ''}${nonInLib ? ' <span class="tag">non in libreria</span>' : ''}</b>
-        <span class="rx sm">${esc(rxTesto(e.modalita, e.parametri))}</span>${riassuntoProg(e)}</span>
+      <span class="mini">${ominoSVG(posaDi(e))}</span>
+      <span class="es-t"><b>${ss ? `<span class="tag gold">${esc(e.gruppo)}${opz.n}</span> ` : ''}${esc(e.nome)}${nonInLib ? ' <span class="tag">non in libreria</span>' : ''}</b>
+        <span class="rx sm">${esc(rxTesto(e.modalita, e.parametri))}</span>${vt ? `<span class="small var-t">${esc(vt)}</span>` : ''}${riassuntoProg(e)}</span>
       <span class="freccia">${e.aperto ? SU : GIU}</span>
     </button>
     ${e.aperto ? `<div class="es-corpo">
       <div class="riga-btn"><button type="button" class="btn sm" data-act="cambia" data-i="${i}">Cambia</button>
         <span class="grow"></span>
-        <button type="button" class="btn sm" data-act="su" data-i="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Sposta su">${SU}</button>
-        <button type="button" class="btn sm" data-act="giu" data-i="${i}" ${i === g.esercizi.length - 1 ? 'disabled' : ''} aria-label="Sposta giù">${GIU}</button>
+        <button type="button" class="btn sm" data-act="su" data-i="${i}" ${primo ? 'disabled' : ''} aria-label="Sposta su">${SU}</button>
+        <button type="button" class="btn sm" data-act="giu" data-i="${i}" ${ultimo ? 'disabled' : ''} aria-label="Sposta giù">${GIU}</button>
         <button type="button" class="btn sm" data-act="copia" data-i="${i}" aria-label="Duplica">${COPIA}</button>
         <button type="button" class="btn sm danger" data-act="elimina" data-i="${i}" aria-label="Elimina">${CESTINO}</button></div>
       ${nonInLib ? `<label>Nome<input data-k="nome" data-i="${i}" value="${esc(e.nome)}"></label>` : ''}
-      <div class="two"><label>Modalità<select data-k="modalita" data-i="${i}">${Object.entries(MODALITA).map(([k, v]) => `<option value="${k}" ${e.modalita === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
-        <label>Superserie<select data-k="gruppo" data-i="${i}"><option value="">Nessuna</option>${['A', 'B', 'C', 'D', 'E'].map(x => `<option ${e.gruppo === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label></div>
-      <div class="campi">${CAMPI[e.modalita].map(c => c === 'testo'
+      <label>Modalità<select data-k="modalita" data-i="${i}">${modalita.map(([k, v]) => `<option value="${k}" ${e.modalita === k ? 'selected' : ''}>${v}</option>`).join('')}
+        ${ss ? '' : '<option value="superserie">Superserie (con l’esercizio successivo)</option>'}</select></label>
+      ${htmlVariante(e, i)}
+      <div class="campi">${campi.map(c => c === 'testo'
         ? `<label class="full">Descrizione<textarea data-f="testo" data-i="${i}" rows="2">${esc(e.parametri.testo || '')}</textarea></label>`
         : `<label>${esc(etichetta(c, e.modalita))}<input data-f="${c}" data-i="${i}" inputmode="${c === 'rip' ? 'text' : 'decimal'}" value="${esc(e.parametri[c] ?? '')}" ${c === 'rip' ? 'placeholder="8 o 8-10"' : ''}></label>`).join('')}
         <label>Tempo esecutivo<input data-k="tempo" data-i="${i}" value="${esc(e.tecnica?.tempo || '')}" placeholder="es. 3-1-1-0" autocapitalize="characters"></label></div>
@@ -393,6 +507,7 @@ function ridisegnaGiorno() {
   const y = window.scrollY;
   document.getElementById('giorno').innerHTML = htmlGiorno();
   app.querySelectorAll('[data-giorno]').forEach((b, i) => { b.querySelector('.n').textContent = E.scheda.giorni[i].esercizi.length; });
+  montaAnteprime();
   window.scrollTo(0, y);
 }
 const segnaSporco = () => { E.sporco = true; };
@@ -407,6 +522,7 @@ function ridisegnaCarta(i) {
 }
 
 function collegaEditor() {
+  montaAnteprime();
   app.onclick = async ev => {
     const back = ev.target.closest('.top .back');
     if (back && E.sporco) {
@@ -422,6 +538,15 @@ function collegaEditor() {
       s.scarico = s.scarico.includes(w) ? s.scarico.filter(x => x !== w) : [...s.scarico, w].sort((a, b) => a - b);
       segnaSporco(); return disegnaEditor();
     }
+    const vb = ev.target.closest('[data-var]');
+    if (vb) {
+      const e = esercizioDi(vb), campo = vb.dataset.var, raw = vb.dataset.val;
+      const v = { ...(e.variante || {}), [campo]: raw === '' ? undefined : (campo === 'panca' ? Number(raw) : raw) };
+      const gradi = variantiDi(e)?.gradi?.[v.attrezzo || variantiDi(e).attrezzi?.[0]] || [];
+      if (!gradi.includes(v.panca)) delete v.panca;
+      e.variante = pulisciVariante(v);
+      segnaSporco(); return ridisegnaGiorno();
+    }
     const b = ev.target.closest('[data-act]');
     if (!b) return;
     const act = b.dataset.act, s = E.scheda, gc = giornoCorrente();
@@ -429,10 +554,28 @@ function collegaEditor() {
     switch (act) {
       case 'apri': gc.esercizi[i].aperto = !gc.esercizi[i].aperto; return ridisegnaGiorno();
       case 'aggiungi': return sceltaEsercizio(x => { gc.esercizi.forEach(e => { e.aperto = false; }); gc.esercizi.push(nuovoEsercizio(x)); segnaSporco(); ridisegnaGiorno(); app.querySelector('.es-card:last-child')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
-      case 'cambia': return sceltaEsercizio(x => { const e = gc.esercizi[i]; Object.assign(e, { esercizio_id: x?.id ?? null, nome: x ? x.nome : e.nome, animazione: x ? x.animazione : 'free' }); segnaSporco(); ridisegnaGiorno(); }, true);
-      case 'su': case 'giu': { const j = act === 'su' ? i - 1 : i + 1; [gc.esercizi[i], gc.esercizi[j]] = [gc.esercizi[j], gc.esercizi[i]]; segnaSporco(); return ridisegnaGiorno(); }
-      case 'copia': gc.esercizi.splice(i + 1, 0, { ...clona(gc.esercizi[i]), aperto: true }); gc.esercizi[i].aperto = false; segnaSporco(); return ridisegnaGiorno();
-      case 'elimina': if (await chiedi({ titolo: `Togliere ${gc.esercizi[i].nome}?`, ok: 'Togli', pericolo: true })) { gc.esercizi.splice(i, 1); segnaSporco(); ridisegnaGiorno(); } return;
+      case 'cambia': return sceltaEsercizio(x => { const e = gc.esercizi[i]; Object.assign(e, { esercizio_id: x?.id ?? null, nome: x ? x.nome : e.nome, animazione: x ? x.animazione : 'free', variante: variantePredefinita(x) }); segnaSporco(); ridisegnaGiorno(); }, true);
+      case 'su': case 'giu': {
+        const es = gc.esercizi, e = es[i];
+        if (e.gruppo) { const j = act === 'su' ? i - 1 : i + 1; [es[i], es[j]] = [es[j], es[i]]; }   // dentro la superserie
+        else {   // fuori: salta un'intera superserie vicina
+          const vicino = bloccoDi(es, act === 'su' ? i - 1 : i + 1);
+          es.splice(i, 1); es.splice(act === 'su' ? vicino.inizio : vicino.fine, 0, e);
+        }
+        normalizzaGruppi(gc); segnaSporco(); return ridisegnaGiorno();
+      }
+      case 'copia': gc.esercizi.splice(i + 1, 0, { ...clona(gc.esercizi[i]), aperto: true }); gc.esercizi[i].aperto = false; normalizzaGruppi(gc); segnaSporco(); return ridisegnaGiorno();
+      case 'elimina': if (await chiedi({ titolo: `Togliere ${gc.esercizi[i].nome}?`, ok: 'Togli', pericolo: true })) { gc.esercizi.splice(i, 1); normalizzaGruppi(gc); segnaSporco(); ridisegnaGiorno(); } return;
+      case 'ss-aggiungi': return sceltaEsercizio(x => { aggiungiInGruppo(gc, i, x); segnaSporco(); ridisegnaGiorno(); }, false, 'Aggiungi alla superserie');
+      case 'ss-sciogli': if (await chiedi({ titolo: 'Sciogliere la superserie?', testo: 'Gli esercizi restano, ognuno con le sue serie.', ok: 'Sciogli' })) { sciogliGruppo(gc, bloccoDi(gc.esercizi, i)); normalizzaGruppi(gc); segnaSporco(); ridisegnaGiorno(); } return;
+      case 'ss-su': case 'ss-giu': {
+        const es = gc.esercizi, b0 = bloccoDi(es, i);
+        const vicino = bloccoDi(es, act === 'ss-su' ? b0.inizio - 1 : b0.fine + 1);
+        const pezzo = es.splice(b0.inizio, b0.fine - b0.inizio + 1);
+        const dove = act === 'ss-su' ? vicino.inizio : vicino.fine - pezzo.length + 1;
+        es.splice(dove, 0, ...pezzo);
+        normalizzaGruppi(gc); segnaSporco(); return ridisegnaGiorno();
+      }
       case 'giorno-nuovo': s.giorni.push({ nome: `Giorno ${s.giorni.length + 1}`, esercizi: [] }); E.giorno = s.giorni.length - 1; segnaSporco(); return disegnaEditor();
       case 'giorno-copia': s.giorni.splice(E.giorno + 1, 0, { ...clona(gc), nome: `${gc.nome} (copia)` }); E.giorno++; segnaSporco(); return disegnaEditor();
       case 'giorno-sx': case 'giorno-dx': { const j = act === 'giorno-sx' ? E.giorno - 1 : E.giorno + 1; [s.giorni[E.giorno], s.giorni[j]] = [s.giorni[j], s.giorni[E.giorno]]; E.giorno = j; segnaSporco(); return disegnaEditor(); }
@@ -476,6 +619,14 @@ function collegaEditor() {
       return;
     }
     if (t.dataset.f) { const e = esercizioDi(t); const v = valoreCampo(t.dataset.f, t.value); if (v === null || v === '') delete e.parametri[t.dataset.f]; else e.parametri[t.dataset.f] = v; segnaSporco(); return; }
+    if (t.dataset.ss) {
+      const gc = giornoCorrente(), b = bloccoDi(gc.esercizi, Number(t.dataset.i)), v = numero(t.value);
+      const membri = gc.esercizi.slice(b.inizio, b.fine + 1);
+      if (t.dataset.ss === 'serie') membri.forEach(e => { if (v === null) delete e.parametri.serie; else e.parametri.serie = v; });
+      else { const u = membri[membri.length - 1]; if (v === null) delete u.parametri.rec; else u.parametri.rec = v; }
+      membri.forEach((_, k) => ridisegnaCarta(b.inizio + k));
+      return segnaSporco();
+    }
     if (t.dataset.k === 'nome') { esercizioDi(t).nome = t.value; return segnaSporco(); }
     if (t.dataset.k === 'nota') { esercizioDi(t).nota = t.value; return segnaSporco(); }
     if (t.dataset.k === 'tempo') { const e = esercizioDi(t); const v = t.value.trim().toUpperCase(); e.tecnica = v ? { tempo: v } : null; return segnaSporco(); }
@@ -497,13 +648,18 @@ function collegaEditor() {
     if (t.dataset.s === 'settimane') { E.scheda.settimane = Number(t.value); E.scheda.scarico = E.scheda.scarico.filter(w => w <= E.scheda.settimane); segnaSporco(); return disegnaEditor(); }
     if (t.dataset.s === 'inizio') { E.scheda.inizio = t.value; return segnaSporco(); }
     if (t.dataset.pp) { const n = t.closest('[data-periodo]').dataset.periodo; E.scheda.pp[n] = sceltePeriodo(app, n); return segnaSporco(); }
+    if (t.dataset.k === 'modalita' && t.value === 'superserie') {
+      const gc = giornoCorrente(), i = Number(t.dataset.i), e = gc.esercizi[i];
+      t.value = e.modalita;
+      return sceltaEsercizio(x => { inSuperserie(e); e.gruppo = '*'; aggiungiInGruppo(gc, i, x); segnaSporco(); ridisegnaGiorno(); }, false, 'Esercizio successivo della superserie');
+    }
     if (t.dataset.k === 'modalita') {
       const e = esercizioDi(t), m = t.value;
       const p = {}; for (const c of CAMPI[m]) if (e.parametri[c] !== undefined) p[c] = e.parametri[c];
+      if (e.gruppo) for (const c of ['serie', 'rec', 'pausa']) if (e.parametri[c] !== undefined) p[c] = e.parametri[c];
       e.modalita = m; e.parametri = Object.keys(p).length ? p : clona(PREDEFINITI[m]); e.progressione = null;
-      segnaSporco(); return ridisegnaGiorno();
+      normalizzaGruppi(giornoCorrente()); segnaSporco(); return ridisegnaGiorno();
     }
-    if (t.dataset.k === 'gruppo') { esercizioDi(t).gruppo = t.value || null; segnaSporco(); return ridisegnaGiorno(); }
     if (t.dataset.f || t.dataset.p || t.dataset.k === 'tempo' || t.dataset.k === 'nome') {
       const i = Number(t.dataset.i); ridisegnaCarta(i);
       if (t.dataset.p || t.dataset.f) {
@@ -610,11 +766,11 @@ async function salvaScheda(nuova) {
 }
 
 // Scelta dalla libreria (con ricerca e filtro per categoria)
-function sceltaEsercizio(scegli, cambio = false) {
+function sceltaEsercizio(scegli, cambio = false, titolo = '') {
   const lib = LIB || [];
   const categorie = [...new Set(lib.map(x => x.categoria).filter(Boolean))].sort();
   let cat = '';
-  const v = finestra(`<div class="scelta"><div class="scelta-testa"><h3>${cambio ? 'Cambia esercizio' : 'Aggiungi esercizio'}</h3>
+  const v = finestra(`<div class="scelta"><div class="scelta-testa"><h3>${esc(titolo || (cambio ? 'Cambia esercizio' : 'Aggiungi esercizio'))}</h3>
       <input type="search" placeholder="Cerca: trazioni, panca, plank…" aria-label="Cerca esercizio" autocomplete="off">
       <div class="chips scroll"><button type="button" class="chip sm" data-cat="" aria-pressed="true">Tutti</button>${categorie.map(c => `<button type="button" class="chip sm" data-cat="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join('')}</div></div>
     <ul class="scelta-lista"></ul>
@@ -816,15 +972,15 @@ function schedaEsercizio(x) {
     <div class="azioni">${modificabile(x) ? '<button type="button" class="btn" data-modifica>Modifica</button>' : ''}<button type="button" class="btn primary" data-chiudi>Chiudi</button></div></div>`);
   v.querySelector('.dialogo').classList.add('grande');
   const stage = v.querySelector('#lib-stage');
-  montaOmino(stage, x.animazione, { forza: true, muscoli: x.muscolo });
-  v.querySelector('#lib-tempo').oninput = e => montaOmino(stage, x.animazione, { tempo: e.target.value, forza: true, muscoli: x.muscolo });
+  montaOmino3D(stage, x.animazione, { forza: true, muscoli: x.muscolo });
+  v.querySelector('#lib-tempo').oninput = e => montaOmino3D(stage, x.animazione, { tempo: e.target.value, forza: true, muscoli: x.muscolo });
   v.querySelector('[data-chiudi]').onclick = () => v.remove();
   v.querySelector('[data-modifica]')?.addEventListener('click', () => { v.remove(); formEsercizio(x); });
 }
 
 function formEsercizio(x) {
   const lib = LIB || [];
-  const categorie = [...new Set(['Calisthenics', 'Streetlifting', 'Powerlifting', 'Bodybuilding', 'Kettlebell', 'CrossFit', ...lib.map(y => y.categoria).filter(Boolean)])];
+  const categorie = [...new Set(['Calisthenics', 'Streetlifting', 'Powerlifting', 'Bodybuilding', 'Kettlebell', 'CrossFit', 'Cardio', 'Pesistica olimpica', ...lib.map(y => y.categoria).filter(Boolean)])];
   const d = x || { nome: '', categoria: 'Calisthenics', famiglia: '', muscolo: '', attrezzo: '', animazione: 'free', modalita_default: 'setrep', altri_nomi: '', accorgimenti: '' };
   const v = finestra(`<h3>${x ? 'Modifica esercizio' : 'Nuovo esercizio'}</h3>
     <form class="stack" novalidate style="margin-top:10px">

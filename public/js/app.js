@@ -5,6 +5,9 @@ import { montaOmino } from './omino.js';
 import './atleta.js';
 import './coach.js';
 import './mobilita-sessione.js';
+import './navigazione.js';
+import './atleta-sezioni.js';
+import './cardio.js';
 
 const ICONE = {
   calendario: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h2M12 14h2M16 14h0M8 17h2M12 17h2"/></svg>',
@@ -133,14 +136,12 @@ async function home() {
     </a>`;
   let corpo;
   if (io.ruolo === 'atleta') {
-    corpo = `
-      <div class="intro"><h1>Ciao ${esc(io.nome)}</h1>
-      ${oggi ? `<div class="stato-oggi ${oggi.cls}"><span class="pallino"></span><span>${esc(oggi.t)}</span></div>` : ''}</div>
-      <div class="home">${tileAllena(false)}${mobAttiva ? `<div class="tiles-2">${tileStorico(true)}${tileMobilita(false)}</div>` : tileStorico(false)}</div>`;
+    const giorno=allena?.giornata?.nome_giorno||allena?.scheda?.giorni[allena.suggerito||0]?.nome;
+    corpo=`<div class="gt-saluto"><div><p class="gt-eyebrow">IL TUO SPAZIO DI ALLENAMENTO</p><h1>Ciao, ${esc(io.nome)}<span>.</span></h1><p class="muted small">Un passo alla volta. Ogni volta meglio.</p></div><span class="avatar">${esc(iniziale(io.nome))}</span></div><section class="gt-hero"><p class="gt-eyebrow">IL TUO PROSSIMO PASSO</p>${allena?.scheda?`<span class="gt-settimana">SETTIMANA ${allena.scheda.settimana} / ${allena.scheda.settimane}</span>`:''}<h2>È il tuo<br>momento.</h2><p>${esc(giorno||'La tua scheda ti aspetta qui')}${allena?.scheda?`<br>${esc(allena.scheda.nome)}`:''}</p><span class="gt-hero-fig" id="fig-allena"></span><a class="btn gt-via" href="#/allena">${allena?.giornata?.stato==='completata'?'Allenamento di oggi salvato':allena?.giornata?'Riprendi':'Allenati'} <span aria-hidden="true">→</span></a></section>${oggi?`<p class="gt-stato">${esc(oggi.t)}</p>`:''}<div class="gt-sezione"><h2>Il tuo allenamento</h2><span>SCEGLI DA DOVE PARTIRE</span></div><div class="gt-menu"><a href="#/scheda"><span class="gt-menu-icon">▤</span><strong>Visiona</strong><small>La scheda, senza iniziare</small><i>↗</i></a>${mobAttiva?'<a href="#/mobilita"><span class="gt-menu-icon">↔</span><strong>Mobilità</strong><small>Muoviti meglio, tutto il corpo</small><i>↗</i></a><a href="#/stretching"><span class="gt-menu-icon">⌁</span><strong>Stretching</strong><small>Una pausa per allungarti</small><i>↗</i></a>':'<div class="gt-spenta"><strong>Mobilità e stretching</strong><small>Sezione disattivata dal coach</small></div>'}<a href="#/cardio"><span class="gt-menu-icon">⌁</span><strong>Cardio</strong><small>Scegli, parti e registra</small><i>↗</i></a></div>`;
   } else {
     const atleti = (persone?.persone || []).filter(p => p.ruolo === 'atleta' && p.id !== io.id);
     const coach = (persone?.persone || []).filter(p => p.ruolo === 'coach');
-    const sub = io.ruolo === 'admin' ? `${coach.length} coach · ${atleti.length} atleti` : `${atleti.length} ${atleti.length === 1 ? 'atleta' : 'atleti'}`;
+    const sub = io.ruolo === 'admin' ? `${coach.length} coach · ${atleti.length} ${atleti.length === 1 ? 'atleta' : 'atleti'}` : `${atleti.length} ${atleti.length === 1 ? 'atleta' : 'atleti'}`;
     corpo = `
       <div class="intro"><h1>Ciao ${esc(io.nome)}</h1><p class="muted">${RUOLI[io.ruolo]}</p></div>
       <div class="home">
@@ -172,6 +173,7 @@ rotta(/^\/profilo$/, () => {
   pagina({ titolo: 'Profilo', html: `
     <div class="profilo-testa"><span class="avatar">${esc(iniziale(io.nome))}</span>
       <div><h2 style="margin:0">${esc(io.nome)}</h2><p class="muted">@${esc(io.username)}</p><span class="tag gold ruolo">${RUOLI[io.ruolo]}</span></div></div>
+    ${io.ruolo==='atleta'?'<div class="card"><h3>Il tuo percorso</h3><p class="hint">Allenamenti, previsto e fatto, voti e sessioni libere.</p><div class="azioni-riga"><a class="btn primary" href="#/storico">Storico allenamenti</a><a class="btn" href="#/storico/schede">Schede passate</a></div></div>':''}
     <div class="card">
       <h3>Cambia password</h3>
       <p class="hint">Scegli quella che preferisci: non ci sono regole su lunghezza o simboli.</p>
@@ -183,9 +185,11 @@ rotta(/^\/profilo$/, () => {
         <button class="btn primary" type="submit">Salva password</button>
       </form>
     </div>
+    ${io.ruolo==='atleta'?'<div class="card"><h3>Preferenze</h3><label>Aspetto<select id="gt-aspetto"><option value="chiaro">Chiaro</option><option value="scuro">Scuro</option></select></label><p class="hint">Preferenza salvata solo su questo dispositivo.</p></div>':''}
     <button class="btn danger big" type="button" id="esci" style="margin-top:8px">Esci</button>` });
   attivaMostraPassword();
   const f = document.getElementById('f-pw');
+  const aspetto=document.getElementById('gt-aspetto');if(aspetto){aspetto.value=document.documentElement.dataset.gtTheme||'chiaro';aspetto.onchange=()=>{document.documentElement.dataset.gtTheme=aspetto.value;try{localStorage.setItem('gt-aspetto',aspetto.value);}catch{}};}
   document.getElementById('esci').onclick = async () => { if (await chiedi({ titolo: 'Vuoi uscire?', ok: 'Esci' })) esci(); };
   f.onsubmit = async e => {
     e.preventDefault();

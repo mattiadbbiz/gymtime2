@@ -197,11 +197,24 @@ svg .lontano{opacity:.45}
 svg .anello{fill:none;stroke:var(--ink-2);stroke-width:.8}
 svg .cinghia{stroke:var(--ink-2);stroke-width:.65}
 svg .anello.dietro,svg .cinghia.dietro{opacity:.5}
-.tile.main svg .eq,.tile.main svg .eqs,.tile.main svg .staggio,.tile.main svg .anello,.tile.main svg .cinghia{stroke:rgba(255,255,255,.6)}
+svg .cordina{fill:none;stroke:var(--ink-2);stroke-width:.85} svg .cordone{fill:none;stroke:var(--ink-2);stroke-width:1.5;stroke-linejoin:round}
+svg .treccia{fill:none;stroke:var(--fig);stroke-width:.5;stroke-dasharray:.9 1.3;opacity:.4}
+.tile.main svg .eq,.tile.main svg .eqs,.tile.main svg .staggio,.tile.main svg .anello,.tile.main svg .cinghia,.tile.main svg .cordina,.tile.main svg .cordone{stroke:rgba(255,255,255,.6)}
 .tile.main svg .ld{stroke:#3A0A13} .tile.main svg .ldin{fill:#3A0A13}
 
-@media (prefers-reduced-motion: reduce){ .toast{transition:none} .attesa::before{animation:none} }
+/* Omino 3D (omino3d.js): la tela riempie il palco, l'aiuto sparisce al primo tocco */
+.stage-3d{position:relative}
+.stage-3d canvas{width:100%;height:100%;display:block}
+.aiuto-3d{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font-size:12px;line-height:1;padding:5px 9px;border-radius:999px;
+  background:rgba(0,0,0,.6);color:#fff;pointer-events:none;transition:opacity .4s;white-space:nowrap}
+.aiuto-3d.via{opacity:0}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} .attesa::before{animation:none} .aiuto-3d{transition:none} }
 @media (max-width:380px){
   .tile{grid-template-columns:78px 1fr;gap:14px} .tile-fig{width:78px;height:78px} .tile-title{font-size:34px}
   .tile.main{grid-template-columns:96px 1fr} .tile.main .tile-fig{width:96px;height:120px} .tile.main .tile-title{font-size:44px}
 }
+
+/* Telefoni stretti: i tasti della home non escono dallo schermo ("Persone" dell'admin a 390 px) */
+.tile.main{grid-template-columns:120px minmax(0,1fr)}
+.tile.main .tile-title{font-size:min(52px,12vw)}
+.tiles-2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}

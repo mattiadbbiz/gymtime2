@@ -7,6 +7,7 @@ export const MODALITA = {
   tempo: 'Tenuta a tempo',
   rt: 'Ripetizioni totali (RT)',
   ladder: 'Scala (ladder)',
+  cardio: 'Cardio e distanze (m, cal, tempo)',
   free: 'Libero'
 };
 
@@ -18,6 +19,7 @@ export const CAMPI = {
   tempo: ['serie', 'secondi', 'carico', 'rec'],
   rt: ['rip', 'minuti', 'carico'],
   ladder: ['da', 'a', 'passo', 'carico'],
+  cardio: ['serie', 'metri', 'calorie', 'secondi', 'carico', 'rec'],
   free: ['testo']
 };
 // Campi che l'atleta corregge con la penna
@@ -28,17 +30,19 @@ export const CAMPI_FATTI = {
   tempo: ['serie', 'secondi', 'carico'],
   rt: ['rip', 'secondi_tot', 'carico'],
   ladder: ['da', 'a', 'carico'],
+  cardio: ['serie', 'metri', 'calorie', 'secondi', 'carico'],
   free: ['testo']
 };
 export const ETICHETTE = {
   serie: 'Serie', rip: 'Ripetizioni', carico: 'Carico (kg)', rec: 'Recupero (s)', minuti: 'Minuti',
   secondi: 'Secondi', giri: 'Giri fatti', da: 'Da', a: 'A', passo: 'Passo', testo: 'Descrizione',
-  secondi_tot: 'Tempo impiegato (s)'
+  secondi_tot: 'Tempo impiegato (s)', metri: 'Metri', calorie: 'Calorie'
 };
 export const etichetta = (campo, modalita) =>
   campo === 'rip' && modalita === 'emom' ? 'Rip. al minuto'
   : campo === 'rip' && modalita === 'rt' ? 'Ripetizioni totali'
   : campo === 'minuti' && modalita === 'rt' ? 'Tempo limite (min)'
+  : campo === 'secondi' && modalita === 'cardio' ? 'Tempo (s)'
   : ETICHETTE[campo] || campo;
 // Campi che possono cambiare nella progressione settimanale
 export const CAMPI_PROG = m => CAMPI[m].filter(c => c !== 'testo');
@@ -55,7 +59,39 @@ export function pulisciParametri(modalita, p = {}) {
     if (c === 'rip' && /^\d+\s*[-–]\s*\d+$/.test(String(v))) { out.rip = String(v).replace(/\s/g, '').replace('–', '-'); continue; }
     const n = num(v); if (n !== null && n >= 0 && n < 100000) out[c] = n;
   }
+  // Superserie: pausa in secondi prima dell'esercizio successivo dello stesso gruppo
+  const pausa = num(p.pausa);
+  if (modalita !== 'free' && pausa !== null && pausa > 0 && pausa <= 600) out.pausa = Math.round(pausa);
   return out;
+}
+
+/* ---------- Variante dell'omino scelta nella scheda ---------- */
+// Stessi valori di omino.js (ATTREZZI, GRADI_PANCA, RIALZI), qui senza dipendenze per il Worker
+export const VARIANTE = {
+  attrezzi: ['manubri', 'bilanciere', 'cavi'],
+  gradi: [0, 15, 30, 45, 60, 75, 90],
+  mani: ['paralleline', 'parallele alte'],
+  piedi: ['rialzo basso', 'panca', 'box alto']
+};
+// { attrezzo, panca, mani, piedi } → solo i valori validi, oppure null
+export function pulisciVariante(v) {
+  if (!v || typeof v !== 'object') return null;
+  const out = {};
+  if (VARIANTE.attrezzi.includes(v.attrezzo)) out.attrezzo = v.attrezzo;
+  const g = num(v.panca);
+  if (g !== null && VARIANTE.gradi.includes(g)) out.panca = g;
+  if (VARIANTE.mani.includes(v.mani)) out.mani = v.mani;
+  if (VARIANTE.piedi.includes(v.piedi)) out.piedi = v.piedi;
+  return Object.keys(out).length ? out : null;
+}
+export function testoVariante(v) {
+  if (!v) return '';
+  const t = [];
+  if (v.attrezzo) t.push(v.attrezzo[0].toUpperCase() + v.attrezzo.slice(1));
+  if (v.panca !== undefined && v.panca !== null) t.push(`panca ${v.panca}°`);
+  if (v.mani) t.push(`mani su ${v.mani}`);
+  if (v.piedi) t.push(`piedi su ${v.piedi === 'panca' ? 'panca' : v.piedi}`);
+  return t.join(' · ');
 }
 
 // Testo breve della prescrizione, per l'etichetta gialla
@@ -67,6 +103,13 @@ export function rxTesto(modalita, p = {}) {
     case 'amrap': return `AMRAP ${p.minuti ?? '?'} min${p.giri ? `, ${p.giri} giri` : ''}${kg}`;
     case 'tempo': return `${p.serie ?? 1} × ${p.secondi ?? '?'} s${kg}`;
     case 'rt': return `${p.rip ?? '?'} ripetizioni totali${p.minuti ? ` in max ${p.minuti} min` : ''}${p.secondi_tot ? ` in ${durata(p.secondi_tot)}` : ''}${kg}`;
+    case 'cardio': {
+      // metri o calorie con un tempo: "500 m in 2:00"; solo il tempo: "10:00"
+      const q = [p.metri ? `${fmtN(p.metri)} m` : '', p.calorie ? `${fmtN(p.calorie)} cal` : ''].filter(Boolean).join(' e ');
+      const t = p.secondi ? durata(p.secondi) : '';
+      const corpo = q ? `${q}${t ? ` in ${t}` : ''}` : (t || '?');
+      return `${p.serie > 1 ? `${p.serie} × ` : ''}${corpo}${kg}`;
+    }
     case 'ladder': return `Scala ${p.da ?? 1}→${p.a ?? '?'}${p.passo && p.passo !== 1 ? ` (passo ${p.passo})` : ''}${kg}`;
     default: return p.testo || 'Libero';
   }
@@ -112,7 +155,7 @@ export function variazioni(es, w) {
     if (typeof b[c] !== 'number' || typeof a[c] !== 'number' || a[c] === b[c]) continue;
     const d = Math.round((b[c] - a[c]) * 100) / 100;
     const segno = d > 0 ? '+' : '−';
-    const u = { carico: ' kg', secondi: ' s', minuti: ' min', rec: ' s di recupero' }[c] || ({ serie: ' serie', rip: ' rip.' }[c] || ` ${ETICHETTE[c] || c}`);
+    const u = { carico: ' kg', secondi: ' s', minuti: ' min', rec: ' s di recupero', metri: ' m', calorie: ' cal' }[c] || ({ serie: ' serie', rip: ' rip.' }[c] || ` ${ETICHETTE[c] || c}`);
     out.push(`${segno}${fmtN(Math.abs(d))}${u}`);
   }
   return out.length ? `${out.join(', ')} rispetto alla settimana scorsa` : '';

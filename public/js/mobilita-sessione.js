@@ -3,6 +3,7 @@
 import { api, esc } from './api.js';
 import { stato, app, rotta, pagina, attesa, toast, chiedi, finestra, vai } from './ui.js';
 import { montaOmino, ominoSVG } from './omino.js';
+import {poolSessione,generaFullBody} from './libere-generatore.js';
 import { AREE, FASI, ZONE, TIPI, TEMPI, nomeArea, doseTesto, generaSessione, sostituisci, durataPiano, secondiEsercizio, secondiRip } from './mobilita.js';
 
 const FRECCIA_SX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
@@ -15,7 +16,7 @@ const minuti = s => Math.max(1, Math.round(s / 60));
 const leggiBastone = () => { try { return localStorage.getItem('gt-bastone') === '1'; } catch { return false; } };
 const salvaBastone = v => { try { localStorage.setItem('gt-bastone', v ? '1' : '0'); } catch {} };
 
-const G = { lib: null, libDi: null, minuti: null, area: '', bastone: leggiBastone(), recenti: [], piano: null, scelte: null };
+const G = { tipo: 'mobilita', lib: null, libDi: null, minuti: null, area: '', bastone: leggiBastone(), recenti: [], piano: null, scelte: null };
 
 async function libreria() {
   if (G.lib && G.libDi === stato.io.id) return G.lib;
@@ -25,29 +26,29 @@ async function libreria() {
 }
 
 /* ---------- Mobilità: scelte e Genera giornata ---------- */
-rotta(/^\/mobilita$/, async () => {
-  attesa('Mobilità');
-  const st = await api('/api/mobilita');
+const nomeTipo=()=>G.tipo==='stretching'?'Stretching':G.tipo==='mista'?'Mobilità e stretching (mista)':'Mobilità';
+const homeTipo=()=>G.tipo==='stretching'?'#/stretching':'#/mobilita';
+rotta(/^\/(mobilita|stretching)$/, async tipo => {
+  G.tipo=tipo;G.area='';G.piano=null;
+  attesa(nomeTipo());
+  const st = await api(`/api/mobilita?tipo=${G.tipo}`);
   if (!st.attiva) {
-    return pagina({ titolo: 'Mobilità', html: `<div class="intro"><h1>Mobilità e stretching</h1></div>
+    return pagina({ titolo: nomeTipo(), html: `<div class="intro"><h1>${esc(nomeTipo())}</h1></div>
       <div class="empty">${stato.io.ruolo === 'atleta' ? 'La sezione è spenta: se ti serve, parlane con il tuo coach.' : 'La sezione è spenta. La riaccendi da Libreria → Mobilità.'}</div>` });
   }
   await libreria();
   G.recenti = st.recenti || [];
   if (!st.durate.includes(G.minuti)) G.minuti = st.durate.includes(15) ? 15 : st.durate[0];
   const bloccata = st.aperta ? 'Prima riprendi o chiudi la sessione in corso' : !st.rimaste_oggi ? 'Per oggi hai fatto tutte le sessioni: riprendi domani' : '';
-  pagina({ titolo: 'Mobilità', html: `
-    <div class="intro"><h1>Mobilità e stretching</h1>
-      <p class="hint">Scegli quanto tempo hai: prepariamo una sessione che parte dal riscaldamento e finisce con la respirazione.</p></div>
+  pagina({ titolo: nomeTipo(), html: `
+    <div class="intro"><h1>${esc(nomeTipo())}</h1>
+      <p class="hint">Scegli quanto tempo hai: generiamo una proposta casuale su tutto il corpo. Controlla la durata stimata prima di avviare.</p></div>
     ${st.aperta ? `<div class="card riprendi"><b>Hai una sessione in corso</b>
       <p class="small muted">${st.aperta.esercizi} esercizi · circa ${minuti(st.aperta.durata_stimata)} min · sei all’esercizio ${Math.min(st.aperta.passo + 1, st.aperta.esercizi)}</p>
       <div class="azioni-riga"><a class="btn primary" href="#/mobilita/s/${st.aperta.id}">Riprendi</a><button class="btn" type="button" id="chiudi-aperta">Chiudila</button></div></div>` : ''}
     <p class="lbl scelta-et">Quanto tempo hai</p>
     <div class="chips" role="group" aria-label="Durata">${st.durate.map(m => `<button type="button" class="chip" data-min="${m}" aria-pressed="${m === G.minuti}">${m} min</button>`).join('')}</div>
-    <p class="lbl scelta-et">Su cosa concentrarti</p>
-    <div class="chips" role="group" aria-label="Area">
-      <button type="button" class="chip" data-area="" aria-pressed="${!G.area}">Tutto il corpo</button>
-      ${Object.entries(AREE).map(([k, a]) => `<button type="button" class="chip" data-area="${k}" aria-pressed="${G.area === k}">${esc(a.nome)}</button>`).join('')}</div>
+    <p class="hint">Tutto il corpo: parte alta, schiena, anche e gambe.</p>
     <label class="check bastone"><input type="checkbox" id="bastone" ${G.bastone ? 'checked' : ''}> Ho un bastone (va bene anche un manico di scopa)</label>
     ${bloccata ? `<p class="small muted" style="margin-top:12px">${bloccata}.</p>` : st.rimaste_oggi <= 2 ? `<p class="small muted" style="margin-top:12px">Oggi puoi fare ancora ${st.rimaste_oggi} ${st.rimaste_oggi === 1 ? 'sessione' : 'sessioni'}.</p>` : ''}
     ${st.ultime?.length ? `<p class="lbl scelta-et">Ultime fatte</p><ul class="mob-ultime">${st.ultime.slice(0, 3).map(u => `<li><span>${esc(dataBreve(u.data))}</span><span class="muted">${u.durata_scelta} min · ${esc(nomeArea(u.zona))}</span></li>`).join('')}</ul>` : ''}`,
@@ -58,13 +59,13 @@ rotta(/^\/mobilita$/, async () => {
     if (a) { G.area = a.dataset.area; app.querySelectorAll('[data-area]').forEach(x => x.setAttribute('aria-pressed', String(x === a))); }
     if (e.target.id === 'chiudi-aperta') {
       if (!await chiedi({ titolo: 'Chiudere la sessione in corso?', testo: 'Si cancella, anche gli esercizi già segnati.', ok: 'Chiudi', pericolo: true })) return;
-      try { await api(`/api/mobilita/sessioni/${st.aperta.id}`, { metodo: 'DELETE' }); toast('Sessione chiusa'); vai('#/mobilita'); } catch (ex) { toast(ex.message); }
+      try { await api(`/api/mobilita/sessioni/${st.aperta.id}`, { metodo: 'DELETE' }); toast('Sessione chiusa'); vai(homeTipo()); } catch (ex) { toast(ex.message); }
     }
   };
   app.onchange = e => { if (e.target.id === 'bastone') { G.bastone = e.target.checked; salvaBastone(G.bastone); } };
   document.getElementById('genera').onclick = () => {
     genera();
-    if (!G.piano.esercizi.length) return toast('In libreria non ci sono esercizi per queste scelte');
+    if (!G.piano.esercizi.length) return toast(G.piano.errore || 'In libreria non ci sono esercizi per queste scelte');
     vai('#/mobilita/anteprima');
   };
 });
@@ -73,12 +74,12 @@ const dataBreve = iso => new Date(iso + 'T12:00:00').toLocaleDateString('it-IT',
 
 function genera() {
   G.scelte = { minuti: G.minuti, area: G.area || null, bastone: G.bastone };
-  G.piano = generaSessione(G.lib, { ...G.scelte, recenti: G.recenti });
+  G.piano = generaFullBody(G.lib, G.tipo, { ...G.scelte, recenti: G.recenti });
 }
 
 /* ---------- Anteprima: durata stimata, Cambia, Rigenera, Avvia ---------- */
 rotta(/^\/mobilita\/anteprima$/, async () => {
-  if (!G.piano || !G.lib || G.libDi !== stato.io.id) return vai('#/mobilita');
+  if (!G.piano || !G.lib || G.libDi !== stato.io.id) return vai(homeTipo());
   disegnaAnteprima();
 });
 
@@ -86,7 +87,7 @@ function disegnaAnteprima(evidenzia = null) {
   const y = window.scrollY;
   const es = G.piano.esercizi, sec = G.piano.secondi;
   const fasi = Object.keys(FASI).filter(f => es.some(e => e.fase === f));
-  pagina({ titolo: 'Anteprima', indietro: '#/mobilita', html: `
+  pagina({ titolo: 'Anteprima ' + nomeTipo(), indietro: homeTipo(), html: `
     <div class="mob-stima"><span class="small muted">Durata stimata</span><b>${durataTesto(sec)}</b>
       <span class="small muted">${G.scelte.minuti} min scelti · ${esc(nomeArea(G.scelte.area))} · ${es.length} esercizi</span></div>
     ${fasi.map(f => {
@@ -103,7 +104,7 @@ function disegnaAnteprima(evidenzia = null) {
     const c = e.target.closest('[data-cambia]'), v = e.target.closest('[data-vedi]');
     if (c) {
       const i = Number(c.dataset.cambia);
-      const q = sostituisci(es, i, G.lib, { bastone: G.scelte.bastone, recenti: G.recenti });
+      const q = sostituisci(es, i, poolSessione(G.lib,G.tipo).filter(x=>Object.values(AREE).some(a=>a.zone.includes(x.zona)&&a.zone.includes(es[i].zona)) || x.tipo==='respirazione' && es[i].tipo==='respirazione'), { bastone: G.scelte.bastone, recenti: G.recenti });
       if (!q) return toast('Per questo esercizio non ci sono alternative');
       G.piano = { esercizi: q, secondi: durataPiano(q) };
       return disegnaAnteprima(i);
@@ -115,10 +116,10 @@ function disegnaAnteprima(evidenzia = null) {
     ev.currentTarget.disabled = true;
     try {
       const { id } = await api('/api/mobilita/sessioni', { metodo: 'POST', dati: {
-        durata_scelta: G.scelte.minuti, area: G.scelte.area, esercizi: G.piano.esercizi.map(e => ({ id: e.id, serie: e.serie, fase: e.fase })) } });
+        tipo_sessione: G.tipo, durata_scelta: G.scelte.minuti, area: G.scelte.area, esercizi: G.piano.esercizi.map(e => ({ id: e.id, serie: e.serie, fase: e.fase })) } });
       G.piano = null; S.id = null;
       vai(`#/mobilita/s/${id}`);
-    } catch (ex) { toast(ex.message); ev.target.disabled = false; if (ex.status === 409) vai('#/mobilita'); }
+    } catch (ex) { toast(ex.message); ev.target.disabled = false; if (ex.status === 409) vai(homeTipo()); }
   };
 }
 
@@ -150,6 +151,7 @@ rotta(/^\/mobilita\/s\/(\d+)$/, async id => {
     const { sessione } = await api(`/api/mobilita/sessioni/${id}`);
     if (sessione.utente_id !== stato.io.id) return location.replace('#/');
     Object.assign(S, { id, s: sessione });
+    G.tipo=sessione.tipo_sessione||'mista';
   }
   disegnaSessione();
 });
@@ -328,7 +330,7 @@ function schermataSalvata() {
   const fine = Date.parse(String(S.s.completata_il || '').replace(' ', 'T') + 'Z');
   pagina({ titolo: 'Sessione salvata', indietro: '', html: `
     <div class="fine"><div class="fine-fig" id="fine-fig"></div><h1>Ben fatto!</h1><span class="gold-line"></span>
-      <p class="muted">Mobilità e stretching · ${esc(nomeArea(S.s.zona))}</p>
+      <p class="muted">${esc(nomeTipo())} · ${esc(nomeArea(S.s.zona))}</p>
       <div class="numeri-riga"><div><b>${fatti}/${es.length}</b><span>esercizi fatti</span></div><div><b>${tempoImpiegato(S.s, fine)}</b><span>minuti</span></div></div></div>`,
     barra: '<a class="btn" href="#/">Home</a><a class="btn primary grow" href="#/storico">Vedi lo storico</a>' });
   montaOmino(document.getElementById('fine-fig'), 'free', { tempo: '0.5-0.1-0.5-0.1' });

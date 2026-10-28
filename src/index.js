@@ -8,6 +8,7 @@ import * as A from './allenamento.js';
 import * as D from './domande.js';
 import * as I from './importa.js';
 import * as M from './mobilita.js';
+import * as L from './sessioni-libere.js';
 
 async function limite(env, chiave) {
   if (!env.LIMITE_ACCESSI) return;
@@ -110,8 +111,14 @@ async function api(request, env, url) {
   if (p === '/api/importa/foto' && m === 'POST') return I.daFoto(request, env, io);
   if (p === '/api/importa/analizza' && m === 'POST') return I.analizza(request, env, io);
 
+  if(p==='/api/cardio'&&m==='GET')return L.statoCardio(env,io);
+  if(p==='/api/cardio/sessioni'&&m==='POST')return L.avviaCardio(request,env,io);
+  if((r=p.match(/^\/api\/cardio\/sessioni\/(\d+)$/))){if(m==='GET')return L.leggiCardio(env,io,+r[1]);if(m==='PUT')return L.salvaCardio(request,env,io,+r[1]);if(m==='DELETE')return L.eliminaCardio(env,io,+r[1]);}
+  if((r=p.match(/^\/api\/cardio\/sessioni\/(\d+)\/completa$/))&&m==='POST')return L.salvaCardio(request,env,io,+r[1],true);
+  if((r=p.match(/^\/api\/esercizi\/(\d+)\/ultime$/))&&m==='GET')return L.ultime(env,io,+r[1]);
+
   // Mobilità e stretching
-  if (p === '/api/mobilita' && m === 'GET') return M.statoMobilita(env, io);
+  if (p === '/api/mobilita' && m === 'GET') return M.statoMobilita(env, io, url.searchParams.get('tipo'));
   if (p === '/api/mobilita/impostazioni' && m === 'GET') return M.leggiImpostazioni(env, io);
   if (p === '/api/mobilita/impostazioni' && m === 'PUT') return M.salvaImpostazioni(request, env, io);
   if (p === '/api/mobilita/libreria' && m === 'GET') return M.elencoLibreria(env, io);
