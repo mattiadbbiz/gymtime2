@@ -1,0 +1,33 @@
+{
+  "base_github_snapshot": "mattiadbbiz/gymtime2@3e6a5b6f8f9f6d7a0da812baa69edf126f444e78",
+  "priorita": "allegati aggiornati > snapshot precedente; funzionalità approvate integrate direttamente",
+  "sintassi_js": 31,
+  "import_mancanti": [],
+  "pose": [
+    "299/299 pose superano il controllo anatomico",
+    "299/299 pose hanno pezzi 3D validi (17123 pezzi controllati)"
+  ],
+  "motori_animazione": "identici byte-per-byte agli allegati",
+  "schema": "0001-0009 eseguite su SQLite locale di prova",
+  "browser": [
+    "Accesso reale, guida, home a 5 accessi e 3 schede",
+    "Visiona: prescrizioni e recuperi caricati dal database",
+    "Catalogo, ricerca e Impara con SVG di riserva",
+    "Profilo e storico schede passato collegati",
+    "Cardio: durata obbligatoria, bozza, ricarica, completamento e storico",
+    "Nessun errore JavaScript nel percorso 1",
+    "100 generazioni full body verificate per tipo e copertura",
+    "mobilita: anteprima, avvio, esiti e completamento sulle API reali",
+    "stretching: anteprima, avvio, esiti e completamento sulle API reali",
+    "Permessi: un altro atleta non legge la sessione",
+    "Recuperi: ±15 s, proposta 90+60 s e ripristino dopo ricarica",
+    "Allenamento: giornata, voti e completamento salvati dalle API originali",
+    "Impara: ultima esecuzione reale con voto e snapshot",
+    "Nessun errore JavaScript nel percorso 2"
+  ],
+  "ambiente_test": "Chromium 390x844, entrypoint app reale, handler Worker originale su Node e adattatore SQLite locale con transazioni; cookie e verifiche password reali; nessuna rotta API fittizia",
+  "cloudflare_runtime": "Wrangler/Workers remoto non eseguito; restano da verificare sul dispositivo reale stampa/condivisione, WebGL, import AI e deploy",
+  "dati_test": "database, utenti e credenziali di test sono fuori dall’archivio",
+  "modulo_backend_mobilita": "ripristinato dalla versione GitHub letta nella conversazione, formattazione compattata e modifiche approvate per i tipi di sessione",
+  "limiti": "limite storico 400 record per tipo mantenuto; offline completo non implementato; guide per dispositivo; guardia link interni senza blocco del tasto Indietro browser"
+}

@@ -1,0 +1,307 @@
+[
+  {
+    "path": ".gitignore",
+    "bytes": 72,
+    "sha256": "d9d1669ab5463a6c524158dcef19d651ea0d2696727be674f2126d99999db2b2"
+  },
+  {
+    "path": "README.md",
+    "bytes": 4226,
+    "sha256": "943ff20f746567d8b025c0223c56f4edfe8fac781938bc51d8103a2c191c2e9e"
+  },
+  {
+    "path": "documentazione/README-originale.md",
+    "bytes": 4974,
+    "sha256": "c4428a40739ab35144fe08ab3d277d8fc410fb0585c59ef99c811e7c9c68e20b"
+  },
+  {
+    "path": "documentazione/VERIFICHE.json",
+    "bytes": 2177,
+    "sha256": "e7aa8cffd60f620d11ceb9952847cf599795737b1dfe27a6ecb0ac2ac256e049"
+  },
+  {
+    "path": "migrations/0001_init.sql",
+    "bytes": 4953,
+    "sha256": "213da6cb806372a0f7603d1e40d3c801edcfcdd848cf4c1135235a1c67d7accf"
+  },
+  {
+    "path": "migrations/0002_accesso.sql",
+    "bytes": 293,
+    "sha256": "6941038d52a9116947dbf8696969f715e02799d070153d850d6de22760772ee9"
+  },
+  {
+    "path": "migrations/0003_settimane_libreria.sql",
+    "bytes": 68993,
+    "sha256": "0c5711f3fb45b6563eae1d584f290edbc549041130ef279f490b7e919d39757e"
+  },
+  {
+    "path": "migrations/0004_storico_schede.sql",
+    "bytes": 1438,
+    "sha256": "7da361188075a078e29ee75d7adcdcc80003fdb680cd0954e6c538c2fcab6a56"
+  },
+  {
+    "path": "migrations/0005_mobilita.sql",
+    "bytes": 3067,
+    "sha256": "8391ea4a81df7f435f58ba8224bb75588e006bd941583add1ffb315401415eca"
+  },
+  {
+    "path": "migrations/0006_libreria_mobilita.sql",
+    "bytes": 10743,
+    "sha256": "037f11fddfc90311d79826393a90e2b6465e87a45d83e7c137a94595df97630b"
+  },
+  {
+    "path": "migrations/0007_varianti.sql",
+    "bytes": 510,
+    "sha256": "1d63d7b110bef3b2d853cc72ce765a984e4c3065b99cbd594fdbafac01900f0e"
+  },
+  {
+    "path": "migrations/0008_cardio_libreria.sql",
+    "bytes": 20758,
+    "sha256": "df208ff5f3cbb214f966848a4488cf6bd4959da382d366a8a4645df5fbc6ffdc"
+  },
+  {
+    "path": "migrations/0009_sessioni_libere.sql",
+    "bytes": 872,
+    "sha256": "f186876941ade0a48f7005596a263fbbb5a5cb9a14db0385f5b13a6c43b5344e"
+  },
+  {
+    "path": "package.json",
+    "bytes": 284,
+    "sha256": "8c3c5960609699be406fbadf6127d7f0a31076f9d1ba7d1bde6eec17031a9eee"
+  },
+  {
+    "path": "public/apple-touch-icon.jpg",
+    "bytes": 6214,
+    "sha256": "3fe756c4753f30c272c86f1cabed056ddfdde927fb45f1bc5282c328ebd104ba"
+  },
+  {
+    "path": "public/apple-touch-icon.png",
+    "bytes": 11932,
+    "sha256": "3d2c2875c9cecb422207f978117eeb355e78222c08df29ee49089342dc8250cf"
+  },
+  {
+    "path": "public/atleta.css",
+    "bytes": 14711,
+    "sha256": "5cfec7b18b8c807bf4bc96c858896b137937f399319bc5e10fe33d7285d50068"
+  },
+  {
+    "path": "public/coach.css",
+    "bytes": 12287,
+    "sha256": "123040253dd8b3b3b1ce653fd4add3dadb87220a490ee69f23a0a3cf3cfee461"
+  },
+  {
+    "path": "public/gymtime.css",
+    "bytes": 5708,
+    "sha256": "db0844914686bd79d8196d88aefecb30a422a539b3015ca517b9db63cfa4354e"
+  },
+  {
+    "path": "public/icon-192.jpg",
+    "bytes": 6727,
+    "sha256": "e4cacbeb77bebbce192502bd5759798ac41c09d2c56260675192cfb8a3a243a5"
+  },
+  {
+    "path": "public/icon-192.png",
+    "bytes": 12730,
+    "sha256": "cb67f3ac69dbeddab07c1728b70effc425d2b9632c5113d6259d8599c506fe65"
+  },
+  {
+    "path": "public/icon-512.jpg",
+    "bytes": 21136,
+    "sha256": "6d4b2fe14dc6f2a8a99d203879ecde011565fd21d78ac911a9dff10397010dc1"
+  },
+  {
+    "path": "public/icon-512.png",
+    "bytes": 38956,
+    "sha256": "af4a805b006bd992cc0e9bfed99b1d9ecedb14777f92e4682ecc373767b4a938"
+  },
+  {
+    "path": "public/icon.svg",
+    "bytes": 1320,
+    "sha256": "4cb32e70dc0979fa02a607aa920e4c1af3ce6a3adb017fc066275402ae0c01c9"
+  },
+  {
+    "path": "public/index.html",
+    "bytes": 1351,
+    "sha256": "106749b9d4604bb08b6814460a223cc160c852f5c4dce8b4cdcf54676aaa8e04"
+  },
+  {
+    "path": "public/js/api.js",
+    "bytes": 1882,
+    "sha256": "86616f5a33a302366d60301e60d9c1ea50943289687fe8a25a0b16feabff6949"
+  },
+  {
+    "path": "public/js/app.js",
+    "bytes": 14767,
+    "sha256": "21356f23497a70c5c236244da29bc49bd266005f8125e451fefa46b1903f0d93"
+  },
+  {
+    "path": "public/js/atleta-sezioni.js",
+    "bytes": 6379,
+    "sha256": "e05e8f163f4148d2c93baff9c5a1331d054aa8ff7b3db45fc6748c169da35296"
+  },
+  {
+    "path": "public/js/atleta.js",
+    "bytes": 63891,
+    "sha256": "32d366f39a2193b5337e0a2efa3eda3c5a66d24aab2ed3b3e99f2e696beca775"
+  },
+  {
+    "path": "public/js/cardio.js",
+    "bytes": 4918,
+    "sha256": "5c247360b2c613b3eebaa80d113b2719337fdcfa3cfda4689ab9891a31b276fd"
+  },
+  {
+    "path": "public/js/coach.js",
+    "bytes": 81705,
+    "sha256": "2ef305da879d35b22c6399d6da8c5f9dbaa7ea48fd6e67319d60df518d6eb7c5"
+  },
+  {
+    "path": "public/js/libere-generatore.js",
+    "bytes": 1089,
+    "sha256": "0c78cc1251340823c27674cd6a646e1ede4f41db57d8b840d2b65ce08b3d9de3"
+  },
+  {
+    "path": "public/js/mobilita-libreria.js",
+    "bytes": 11819,
+    "sha256": "8eca82f3a514778b5e14c1b1ea36bbcd074441f1066ebbc2a2c84d42fee5f9cb"
+  },
+  {
+    "path": "public/js/mobilita-sessione.js",
+    "bytes": 21580,
+    "sha256": "4031a5ae7b8ea233940a9f79196ca141bbd63006c1d1507fed4896283772bb6d"
+  },
+  {
+    "path": "public/js/mobilita.js",
+    "bytes": 17361,
+    "sha256": "a83cb10ea2c26003fe722599876f784052f45bb39c866da5dc8104b5d1d3a5a2"
+  },
+  {
+    "path": "public/js/navigazione.js",
+    "bytes": 5153,
+    "sha256": "7725fb90a0288dc2e550d8f33bde33c2b72692b95e3c50ab2641a0cffc9d0723"
+  },
+  {
+    "path": "public/js/omino.js",
+    "bytes": 136938,
+    "sha256": "7aecacbb6fd7977c7899eb818e16f552c6e9a3f34df7c9145cd0d94f0096e9f0"
+  },
+  {
+    "path": "public/js/omino3d.js",
+    "bytes": 36661,
+    "sha256": "d9a243d89a1134b73a3437df589048d98695b3987826f78a65a565d605566f94"
+  },
+  {
+    "path": "public/js/recuperi.js",
+    "bytes": 363,
+    "sha256": "811bd4e7a0f11705c707d7f7e6189874fbc73127f5e0c1333e14167f68bb1b2a"
+  },
+  {
+    "path": "public/js/regole.js",
+    "bytes": 13115,
+    "sha256": "961a3749fe2b5fa77578a91826cf5b96c496d871d47379bda354d957ec6ef3d6"
+  },
+  {
+    "path": "public/js/storico-schede.js",
+    "bytes": 10665,
+    "sha256": "bc526e8bfd427fbd4954e505089451fb68640378421085be6000b6dcf30dd24a"
+  },
+  {
+    "path": "public/js/ui.js",
+    "bytes": 4699,
+    "sha256": "2b9ad4cf7184cf4acf65fd0250b19808a1bb1fedc4609281798bdef45c001d03"
+  },
+  {
+    "path": "public/js/vendor/LEGGIMI.txt",
+    "bytes": 99,
+    "sha256": "0185133f3078a372cab67da44612e0f9b8100225a5b5d4e2650822d070afc120"
+  },
+  {
+    "path": "public/manifest.webmanifest",
+    "bytes": 643,
+    "sha256": "b05ca58446f743898cf6896823455a3b5bbd94e738392d3784a790f01212c4c6"
+  },
+  {
+    "path": "public/stile.css",
+    "bytes": 15785,
+    "sha256": "7e11d6a7316f32b6aa031d02f80f9deedacc89050879f1c0616a7b192b9d3c1e"
+  },
+  {
+    "path": "src/allenamento.js",
+    "bytes": 11462,
+    "sha256": "e774791d5f2cc81967df11fb79c44580fa5950b8946b1d99696d1fcbec658402"
+  },
+  {
+    "path": "src/auth.js",
+    "bytes": 3365,
+    "sha256": "c4d416eb1076939a6ffcc68def4c8c85de83c5b7188574d3fea7d23a38def99c"
+  },
+  {
+    "path": "src/domande.js",
+    "bytes": 3610,
+    "sha256": "ce3ed5540e2953a9007d8e0a60c27062d08897e614fee08bceb319b487afa68d"
+  },
+  {
+    "path": "src/importa.js",
+    "bytes": 10541,
+    "sha256": "2daa3b5924e941f238a0021d1580941c68e652707e7e819cca6d03ac000f86a2"
+  },
+  {
+    "path": "src/index.js",
+    "bytes": 8885,
+    "sha256": "2bccdac475acfcd2a23aecd5a1fc27320baa474530005e1c4dab7fb4a7d0c158"
+  },
+  {
+    "path": "src/libreria.js",
+    "bytes": 3393,
+    "sha256": "3b250b6b70c6f08c6fb8809edf4dcdc1435142fa9d067595c7a92edab3798698"
+  },
+  {
+    "path": "src/mobilita.js",
+    "bytes": 11468,
+    "sha256": "55f0439bd9fab0f949e89184d5f780687cfb0f9d06169244c05b54e6bfd16593"
+  },
+  {
+    "path": "src/schede.js",
+    "bytes": 15905,
+    "sha256": "c7df959956699465fe77c6b521c2a3f0414eea38b95e440f7266768c0a903539"
+  },
+  {
+    "path": "src/sessioni-libere.js",
+    "bytes": 5471,
+    "sha256": "78007aabb18642749a8fe522dc0571552fd67ee46b69f1ccba186befacc58e4e"
+  },
+  {
+    "path": "src/utenti.js",
+    "bytes": 6236,
+    "sha256": "5ed58f2c4384bf7642c9e39f002c4d67c5c1d9ed554c36cb8507e4559b60e48c"
+  },
+  {
+    "path": "src/util.js",
+    "bytes": 2217,
+    "sha256": "d06522b608e97d10a066dac0d49d6950f70b6e030824d3ed4800aeb78fdd2339"
+  },
+  {
+    "path": "strumenti/controllo-3d.mjs",
+    "bytes": 1501,
+    "sha256": "92ed6e662b3d4586f14d656dee1b771a7e569f3bc3afabdb8a21e4417131dcca"
+  },
+  {
+    "path": "strumenti/controllo-pose.mjs",
+    "bytes": 5743,
+    "sha256": "2eb6ee745b25cce9cfd6403d54078ef77c5b69682d8c590475011cb62b27d951"
+  },
+  {
+    "path": "strumenti/crea-admin-locale.mjs",
+    "bytes": 1134,
+    "sha256": "c085570d922e536708ad164cfbba37e62b8021fd5bce74d69d9126d90c6854d6"
+  },
+  {
+    "path": "strumenti/crea-admin-locale.sh",
+    "bytes": 497,
+    "sha256": "300c6e16e2ef99580c1a7fbaed1b1ac865304d2665cdcd208f32c13f2209cd09"
+  },
+  {
+    "path": "wrangler.toml",
+    "bytes": 655,
+    "sha256": "b166722072e85511cdc7ad8b7e74b3e749eea52f6fd5645f1f440cad1a07e964"
+  }
+]
